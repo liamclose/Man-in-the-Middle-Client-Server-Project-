@@ -4,17 +4,43 @@ import java.net.*;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
+
+/*
+ * TODO:
+ * 	-File Transfer
+ * 		-Reading from file
+ * 		-Writing to file
+ * 		-Formatting messages/updating byte numbers/etc
+ *  -Read Me
+ *  -Testing
+ *  -Ask TA about verbose/quiet mode and UML collaboration diagrams
+ *  -Closing intermediate/multithreading there?
+ */
+
+
+
 public class Message extends Thread{
 	Scanner sc;
 	Server s;
+	Client c;
 	public Message(Server s) {
 		this.s = s;
 		sc = new Scanner(System.in);
 	}
 	
+	public Message(Client c) {
+		this.c = c;
+		sc = new Scanner(System.in);
+	}
+	
 	public void run() {
 		if (sc.hasNext()) {
-			s.setShutdown();
+			if (s!=null) {
+				s.setShutdown();
+			}
+			if (c!=null) {
+				c.setShutdown();
+			}
 		}
 	}
 	
@@ -36,6 +62,7 @@ public class Message extends Thread{
 		for (int i = 0;i<l;i++) {
 			result[i+2] = msg[i];
 		}
+		result[4] = 0;
 		result[l+2] = 0;
 		for (int i = 0;i<format.length();i++) {
 			result[l+3+i] = format.getBytes()[i];

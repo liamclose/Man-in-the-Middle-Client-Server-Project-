@@ -72,7 +72,6 @@ public class Server extends Thread{
 
 	public void receiveAndReply()
 	{
-		System.out.println("Type q to quit.");
 		while (!shutdown) {
 			byte data[] = new byte[100];
 			receivePacket = new DatagramPacket(data, data.length);

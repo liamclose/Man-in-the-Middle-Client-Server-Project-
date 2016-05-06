@@ -7,6 +7,9 @@ public class Client {
 
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendReceiveSocket;
+	
+	public static final int read = 1;
+	public static final int write = 2;
 
 	public Client()
 	{
@@ -17,6 +20,10 @@ public class Client {
 			se.printStackTrace();
 			System.exit(1);
 		}
+	}
+	
+	public void setShutdown() {
+		sendReceiveSocket.close();
 	}
 
 	/*
@@ -36,7 +43,6 @@ public class Client {
 			e.printStackTrace();
 			System.exit(1);
 		}
-
 		Message.printOutgoing(sendPacket, "Client");
 
 		// Send the datagram packet to the server via the send/receive socket. 
@@ -46,17 +52,19 @@ public class Client {
 			e.printStackTrace();
 			System.exit(1);
 		}
-
 		// Construct a DatagramPacket for receiving packets up 
 		// to 100 bytes long (the length of the byte array).
-
 		byte data[] = new byte[100];
 		receivePacket = new DatagramPacket(data, data.length);
 
 		try {
 			// Block until a datagram is received via sendReceiveSocket.  
 			sendReceiveSocket.receive(receivePacket);
-		} catch(IOException e) {
+		} 
+		catch (SocketException e) {
+			
+		}
+		catch(IOException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
@@ -69,12 +77,8 @@ public class Client {
 	public static void main(String args[])
 	{
 		Client c = new Client();
-				for (int i = 0;i<10;i++) {
-					c.sendAndReceive(i%2+1); //for the first 10 requests, send an opcode of either 0 or 1
-				}
-		//for the 11th, use an opcode of 6, an example of an incorrect opcode making the Datagram invalid
-		//this kills the server
-		c.sendAndReceive(6); 
+		new Message(c).start();
+		c.sendAndReceive(read); //for the first 10 requests, send an opcode of either 0 or 1
 		c.sendReceiveSocket.close();
 	}
 }
