@@ -1,9 +1,22 @@
 package assign1;
 
 import java.net.*;
+import java.util.Scanner;
 import java.util.regex.Pattern;
 
-public class Message {
+public class Message extends Thread{
+	Scanner sc;
+	Server s;
+	public Message(Server s) {
+		this.s = s;
+		sc = new Scanner(System.in);
+	}
+	
+	public void run() {
+		if (sc.hasNext()) {
+			s.setShutdown();
+		}
+	}
 	
 	public static boolean validate(String data) {
 		return Pattern.matches("^\0(\001|\002).+\0(([oO][cC][tT][eE][tT])|([nN][eE][tT][aA][sS][cC][iI][iI]))\0$", data);

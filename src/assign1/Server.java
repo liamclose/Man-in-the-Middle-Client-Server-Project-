@@ -59,27 +59,32 @@ public class Server extends Thread{
 			sendSocket.send(sendPacket);
 			Message.printOutgoing(sendPacket, this.toString());
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			System.exit(1);
 		}
 		sendSocket.close();
 	}
+	
+	public void setShutdown() {
+		shutdown = true;
+		receiveSocket.close();
+	}
 
 	public void receiveAndReply()
 	{
-		System.out.println("Type any character to quit.");
+		System.out.println("Type q to quit.");
 		while (!shutdown) {
 			byte data[] = new byte[100];
 			receivePacket = new DatagramPacket(data, data.length);
 
 			System.out.println(activeCount());
-			//shutdown = s.hasNext();
-			System.out.println("probs");
 			// Block until a datagram packet is received from receiveSocket.
 			try {        
 				receiveSocket.receive(receivePacket);
-			} catch (IOException e) {
+			} catch (SocketException e) {
+				
+			}
+			catch (IOException e) {
 				System.out.print("IO Exception: likely:");
 				System.out.println("Receive Socket Timed Out.\n" + e);
 				e.printStackTrace();
@@ -96,14 +101,11 @@ public class Server extends Thread{
 					e.printStackTrace();
 					System.exit(1);
 				}
-//				try {
-//					sendSocket = new DatagramSocket(); //create new socket to send the response
-//				} catch (SocketException e1) {
-//					e1.printStackTrace();
-//					System.exit(1);
-//				}
 				new Server(receivePacket).start();
 
+			}
+			else if (shutdown) {
+				return;
 			}
 			else {
 				System.out.println("Invalid Datagram. Exiting now.");
@@ -114,7 +116,9 @@ public class Server extends Thread{
 
 	public static void main( String args[] )
 	{
+		System.out.println("Press any character to quit.");
 		Server c = new Server();
+		new Message(c).start();
 		c.receiveAndReply();
 		c.receiveSocket.close(); //close the receiving socket
 	}
