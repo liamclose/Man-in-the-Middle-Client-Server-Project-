@@ -8,11 +8,14 @@ package assign1;
 
 import java.io.*;
 import java.net.*;
+import java.util.Scanner;
 
-public class Server {
+public class Server extends Thread{
 
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendSocket, receiveSocket;
+	Scanner s;
+	boolean shutdown;
 
 	public static final byte[] readAck = {0, 3, 0, 1};
 	public static final byte[] writeAck = {0, 4, 0, 0};
@@ -25,17 +28,54 @@ public class Server {
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
-		} 
+		}
+		s = new Scanner(System.in);
+		shutdown = false;
+		System.out.println("testing");
+
 	}
 
-	
+	public Server(DatagramPacket received) {
+		int opcode = received.getData()[1];
+		if (opcode==1) {
+			sendPacket = new DatagramPacket(readAck, readAck.length,
+					received.getAddress(), received.getPort());
+		}
+		else if (opcode==2) {
+			System.out.println("Write request received.");
+			sendPacket = new DatagramPacket(writeAck, writeAck.length,
+					received.getAddress(), received.getPort());
+		}
+	}
+
+	public void run() {
+		try {
+			sendSocket = new DatagramSocket();
+		} catch (SocketException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		try {
+			sendSocket.send(sendPacket);
+			Message.printOutgoing(sendPacket, this.toString());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.exit(1);
+		}
+		sendSocket.close();
+	}
 
 	public void receiveAndReply()
 	{
-		while (true) {
+		System.out.println("Type any character to quit.");
+		while (!shutdown) {
 			byte data[] = new byte[100];
 			receivePacket = new DatagramPacket(data, data.length);
 
+			System.out.println(activeCount());
+			//shutdown = s.hasNext();
+			System.out.println("probs");
 			// Block until a datagram packet is received from receiveSocket.
 			try {        
 				receiveSocket.receive(receivePacket);
@@ -56,36 +96,13 @@ public class Server {
 					e.printStackTrace();
 					System.exit(1);
 				}
-				try {
-					sendSocket = new DatagramSocket(); //create new socket to send the response
-				} catch (SocketException e1) {
-					e1.printStackTrace();
-					System.exit(1);
-				}
-				if (data[1]==1) {
-					System.out.println("Read request received.");
-					sendPacket = new DatagramPacket(readAck, readAck.length,
-							receivePacket.getAddress(), receivePacket.getPort());
-				}
-				else if (data[1]==2) {
-					System.out.println("Write request received.");
-					sendPacket = new DatagramPacket(writeAck, readAck.length,
-							receivePacket.getAddress(), receivePacket.getPort());
-				}
-				else {
-					System.out.println("Invalid opcode.");
-					System.exit(1);
-				}
-
-				Message.printOutgoing(sendPacket, "Server");
-				// Send the datagram packet to the client via the send socket. 
-				try {
-					sendSocket.send(sendPacket);
-				} catch (IOException e) {
-					e.printStackTrace();
-					System.exit(1);
-				}
-				sendSocket.close();
+//				try {
+//					sendSocket = new DatagramSocket(); //create new socket to send the response
+//				} catch (SocketException e1) {
+//					e1.printStackTrace();
+//					System.exit(1);
+//				}
+				new Server(receivePacket).start();
 
 			}
 			else {
