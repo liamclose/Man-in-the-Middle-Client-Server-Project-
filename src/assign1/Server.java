@@ -16,6 +16,7 @@ public class Server extends Thread{
 	DatagramSocket sendSocket, receiveSocket;
 	Scanner s;
 	boolean shutdown;
+	boolean timeout = false;
 
 	public static final byte[] readAck = {0, 3, 0, 1};
 	public static final byte[] writeAck = {0, 4, 0, 0};
@@ -67,21 +68,22 @@ public class Server extends Thread{
 	
 	public void setShutdown() {
 		shutdown = true;
-		receiveSocket.close();
 	}
 
 	public void receiveAndReply()
 	{
 		while (!shutdown) {
+			timeout = false;
 			byte data[] = new byte[100];
 			receivePacket = new DatagramPacket(data, data.length);
 
 			System.out.println(activeCount());
 			// Block until a datagram packet is received from receiveSocket.
-			try {        
+			try {
+				receiveSocket.setSoTimeout(3000);
 				receiveSocket.receive(receivePacket);
-			} catch (SocketException e) {
-				
+			} catch (SocketTimeoutException e) {
+				timeout = true;
 			}
 			catch (IOException e) {
 				System.out.print("IO Exception: likely:");
@@ -103,14 +105,16 @@ public class Server extends Thread{
 				new Server(receivePacket).start();
 
 			}
-			else if (shutdown) {
-				return;
+			else if (timeout) {
+				
 			}
 			else {
 				System.out.println("Invalid Datagram. Exiting now.");
 				throw new IllegalArgumentException();
 			}
+			
 		}
+		receiveSocket.close();
 	}
 
 	public static void main( String args[] )
