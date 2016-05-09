@@ -21,31 +21,21 @@ import java.util.regex.Pattern;
 
 public class Message extends Thread{
 	Scanner sc;
-	Server s;
-	Client c;
-	public Message(Server s) {
+	Stoppable s;
+
+	public Message(Stoppable s) {
 		this.s = s;
-		sc = new Scanner(System.in);
-	}
-	
-	public Message(Client c) {
-		this.c = c;
 		sc = new Scanner(System.in);
 	}
 	
 	public void run() {
 		if (sc.hasNext()) {
-			if (s!=null) {
-				s.setShutdown();
-			}
-			if (c!=null) {
-				c.setShutdown();
-			}
+			s.setShutdown();
 		}
 	}
 	
 	public static boolean validate(String data) {
-		return Pattern.matches("^\0(\001|\002).+\0(([oO][cC][tT][eE][tT])|([nN][eE][tT][aA][sS][cC][iI][iI]))\0$", data);
+		return Pattern.matches("^\0(\001|\002)+\0(([oO][cC][tT][eE][tT])|([nN][eE][tT][aA][sS][cC][iI][iI]))\0$", data);
 	}
 	
 	/*

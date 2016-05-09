@@ -8,15 +8,11 @@ package assign1;
 
 import java.io.*;
 import java.net.*;
-import java.util.Scanner;
 
-public class Server extends Thread{
+public class Server extends Stoppable{
 
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendSocket, receiveSocket;
-	Scanner s;
-	boolean shutdown;
-	boolean timeout = false;
 
 	public static final byte[] readAck = {0, 3, 0, 1};
 	public static final byte[] writeAck = {0, 4, 0, 0};
@@ -30,9 +26,7 @@ public class Server extends Thread{
 			se.printStackTrace();
 			System.exit(1);
 		}
-		s = new Scanner(System.in);
 		shutdown = false;
-		System.out.println("testing");
 
 	}
 
@@ -64,10 +58,6 @@ public class Server extends Thread{
 			System.exit(1);
 		}
 		sendSocket.close();
-	}
-	
-	public void setShutdown() {
-		shutdown = true;
 	}
 
 	public void receiveAndReply()

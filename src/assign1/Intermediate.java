@@ -7,9 +7,12 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
-public class Intermediate {
+public class Intermediate extends Stoppable{
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket serverSideSocket, receiveSocket, replySocket;
+	int replyPort;
+	InetAddress replyAddress;
+	private boolean shutdown = false;
 
 	public Intermediate() {	
 		try {
@@ -22,12 +25,29 @@ public class Intermediate {
 			System.exit(1);
 		}
 	}
+
+	public Intermediate(DatagramPacket received) {
+		replyPort = received.getPort();
+		replyAddress = received.getAddress();
+		receivePacket = received;
+	}
+
+	public void run() {
+		try {
+			sendPacket = new DatagramPacket(receivePacket.getData(),receivePacket.getLength(),InetAddress.getLocalHost(),6000);
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		
+
+	}
 	/*
 	 * forward takes all messages from the client and forwards them on to the server
 	 * it then waits for a response, which it forwards back to the client
 	 */
 	public void forward() {
-		while (true) { //loop forever
+		while (!shutdown) { //loop forever-ish
 			byte data[] = new byte[100];
 			receivePacket = new DatagramPacket(data, data.length);
 			try {
@@ -36,8 +56,6 @@ public class Intermediate {
 				e.printStackTrace();
 				System.exit(1);
 			}
-			InetAddress replyAddress = receivePacket.getAddress(); //save the address and port
-			int replyPort = receivePacket.getPort(); //so they can be used in the reply
 
 			Message.printIncoming(receivePacket, "Intermediate Host");
 			int len = receivePacket.getLength();

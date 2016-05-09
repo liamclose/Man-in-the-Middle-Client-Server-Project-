@@ -3,12 +3,10 @@ package assign1;
 import java.io.*;
 import java.net.*;
 
-public class Client {
+public class Client extends Stoppable{
 
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendReceiveSocket;
-	boolean shutdown = false;
-	boolean timeout = true;
 
 	public static final int read = 1;
 	public static final int write = 2;
@@ -22,10 +20,6 @@ public class Client {
 			se.printStackTrace();
 			System.exit(1);
 		}
-	}
-
-	public void setShutdown() {
-		shutdown = true;
 	}
 
 	/*
