@@ -57,7 +57,7 @@ public class Intermediate extends Stoppable{
 				System.exit(1);
 			}
 
-			Message.printIncoming(receivePacket, "Intermediate Host");
+			Message.printIncoming(receivePacket, "Intermediate Host",verbose);
 			int len = receivePacket.getLength();
 
 			try {
@@ -73,7 +73,7 @@ public class Intermediate extends Stoppable{
 				e.printStackTrace();
 				System.exit(1);
 			}
-			Message.printOutgoing(sendPacket, "Intermediate Host");
+			Message.printOutgoing(sendPacket, "Intermediate Host",verbose);
 			try {
 				serverSideSocket.receive(receivePacket);
 			}
@@ -81,7 +81,7 @@ public class Intermediate extends Stoppable{
 				e.printStackTrace();
 				System.exit(1);
 			}
-			Message.printIncoming(receivePacket, "Intermediate Host");
+			Message.printIncoming(receivePacket, "Intermediate Host",verbose);
 			len = receivePacket.getLength();
 			sendPacket = new DatagramPacket(data, len, replyAddress, replyPort); //new packet to send back to client
 			try {
@@ -95,7 +95,7 @@ public class Intermediate extends Stoppable{
 				e.printStackTrace();
 				System.exit(1);
 			}
-			Message.printOutgoing(sendPacket, "Intermediate Host");
+			Message.printOutgoing(sendPacket, "Intermediate Host",verbose);
 			replySocket.close(); //close socket once message sent to client
 		}
 	}

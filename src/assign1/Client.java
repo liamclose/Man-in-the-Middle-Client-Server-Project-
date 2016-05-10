@@ -11,8 +11,6 @@ public class Client extends Stoppable{
 
 	public static final int READ= 1; //caps
 	public static final int WRITE = 2;
-	public boolean test;
-	public boolean verbose;
 
 	// validation client side?
 	public Client()
@@ -32,9 +30,7 @@ public class Client extends Stoppable{
 	 * Once it has sent the request it waits for the server to respond.
 	 */
 	public void sendAndReceive(int opcode) {
-		System.out.println(opcode);
 		timeout = true;
-		System.out.println(filename);
 		String format = "ocTeT";
 		byte msg[] = Message.formatRequest(filename, format, opcode);
 		try {
@@ -44,7 +40,7 @@ public class Client extends Stoppable{
 			e.printStackTrace();
 			System.exit(1);
 		}
-		Message.printOutgoing(sendPacket, "Client");
+		Message.printOutgoing(sendPacket, "Client",verbose);
 
 		// Send the datagram packet to the server via the send/receive socket. 
 		try {
@@ -62,7 +58,6 @@ public class Client extends Stoppable{
 					byte[] resp = new byte[4];
 					receivePacket = new DatagramPacket(resp,4);
 					while (timeout) {
-						System.out.println("timing out....");
 						timeout = false;
 						try {
 							sendReceiveSocket.setSoTimeout(3000);
@@ -89,7 +84,6 @@ public class Client extends Stoppable{
 			}
 			else if (opcode==READ) {
 				filename = "copy".concat(filename);
-				System.out.println("Now we read.");
 				try {
 					BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(filename));
 					write(out,sendReceiveSocket);
@@ -109,7 +103,7 @@ public class Client extends Stoppable{
 		Client c = new Client();
 		String x;
 		Scanner sc = new Scanner(System.in);
-		System.out.println("(R)ead, (w)rite, or (q)uit?");
+		System.out.println("(R)ead, (w)rite, (o)ptions, or (q)uit?");
 		while(sc.hasNext()) {
 			x = sc.next();
 			System.out.println(x.contains("r"));
@@ -132,6 +126,21 @@ public class Client extends Stoppable{
 			else if (x.contains("q")||x.contains("Q")) {
 				c.sendReceiveSocket.close();
 				System.exit(0);
+			}
+			else if (x.contains("o")||x.contains("O")) {
+				System.out.println("Would you like to turn off verbose mode? Y/N");
+				x = sc.next();
+				sc.reset();
+				if (x.contains("y")||x.contains("Y")) {
+					c.verbose = false;
+				}
+				System.out.println("Would you like to turn on test mode?");
+				x = sc.next();
+				sc.reset();
+				if (x.contains("y")||x.contains("Y")) {
+					c.test = true;
+				}
+				
 			}
 			else {
 				sc.reset();

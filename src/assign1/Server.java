@@ -31,19 +31,18 @@ public class Server extends Stoppable{
 
 	}
 
-	public Server(DatagramPacket received) {
+	public Server(DatagramPacket received,boolean verbose) {
+		this.verbose = verbose;
 		filename = Message.parseFilename(new String(received.getData(),0,received.getLength()));
 		receivePacket = received;
 		int opcode = received.getData()[1];
 		if (opcode==1) {
-			System.out.println("Read request received.");
 			readTransfer = true;
 			sendPacket = new DatagramPacket(readAck, readAck.length,
 					received.getAddress(), received.getPort());
 		}
 		else if (opcode==2) {
 			readTransfer = false;
-			System.out.println("Write request received.");
 			sendPacket = new DatagramPacket(writeAck, writeAck.length,
 					received.getAddress(), received.getPort());
 		}
@@ -67,7 +66,7 @@ public class Server extends Stoppable{
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void write() {
 		filename = "copy".concat(filename);
 		BufferedOutputStream out;
@@ -81,15 +80,14 @@ public class Server extends Stoppable{
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void run() {
-		System.out.println(filename);
-			if (!readTransfer) {
-				write();
-			}
-			else {
-				read();
-			}
+		if (!readTransfer) {
+			write();
+		}
+		else {
+			read();
+		}
 		sendSocket.close();
 	}
 
@@ -99,8 +97,6 @@ public class Server extends Stoppable{
 			timeout = false;
 			byte data[] = new byte[516];
 			receivePacket = new DatagramPacket(data, data.length);
-			
-			//System.out.println(activeCount());
 			// Block until a datagram packet is received from receiveSocket.
 			try {
 				receiveSocket.setSoTimeout(3000);
@@ -116,8 +112,8 @@ public class Server extends Stoppable{
 			}
 			//if it passes the validation the Datagram is correctly formed, otherwise something went wrong
 			if (Message.validate(new String(receivePacket.getData(),0,receivePacket.getLength()))) {
-				Message.printIncoming(receivePacket, "Server"); //string not working for print
-				new Server(receivePacket).start();
+				Message.printIncoming(receivePacket, "Server",verbose); //string not working for print
+				new Server(receivePacket, verbose).start();
 
 			}
 			else if (timeout) {
@@ -125,10 +121,6 @@ public class Server extends Stoppable{
 			}
 			else {
 				System.out.println("Invalid Datagram. Exiting now.");
-				Message.printIncoming(receivePacket, "test");
-				new Server(receivePacket).start();
-				System.out.println(activeCount());
-				//System.exit(1);
 				throw new IllegalArgumentException("Invalid Packet");
 			}
 
@@ -138,7 +130,7 @@ public class Server extends Stoppable{
 
 	public static void main( String args[] )
 	{
-		System.out.println("Press any character to quit.");
+		System.out.println("Press q to quit or v to toggle verbose mode.");
 		Server c = new Server();
 		new Message(c).start();
 		c.receiveAndReply();
