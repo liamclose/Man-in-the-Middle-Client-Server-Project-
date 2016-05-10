@@ -8,7 +8,7 @@ public class Client extends Stoppable{
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendReceiveSocket;
 
-	public static final int read = 1;
+	public static final int read = 1; //caps
 	public static final int write = 2;
 
 	// validation client side?
@@ -30,9 +30,9 @@ public class Client extends Stoppable{
 	 */
 	public void sendAndReceive(int opcode) {
 		timeout = true;
-		String s = "test.txt";
+		String filename = "test.txt";
 		String format = "ocTeT";
-		byte msg[] = Message.formatRequest(s, format, opcode);
+		byte msg[] = Message.formatRequest(filename, format, opcode);
 
 		try {
 			sendPacket = new DatagramPacket(msg, msg.length,
@@ -52,26 +52,59 @@ public class Client extends Stoppable{
 		}
 		// Construct a DatagramPacket for receiving packets up 
 		// to 100 bytes long (the length of the byte array).
-		byte data[] = new byte[100];
+		byte data[] = new byte[516];
 		receivePacket = new DatagramPacket(data, data.length);
-		while (timeout&&!shutdown) {
-			timeout = false;
-			try {
-				// Block until a datagram is received via sendReceiveSocket. 
-				//sendReceiveSocket.setSoTimeout(3000);
-				sendReceiveSocket.receive(receivePacket);
-			} 
-			catch (SocketTimeoutException e) {
-				timeout = true;
-			}
-			catch(IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
-		}
+//		while (timeout&&!shutdown) {
+//			timeout = false;
+//			try {
+//				// Block until a datagram is received via sendReceiveSocket. 
+//				//sendReceiveSocket.setSoTimeout(3000);
+//				sendReceiveSocket.receive(receivePacket);
+//			} 
+//			catch (SocketTimeoutException e) {
+//				timeout = true;
+//			}
+//			catch(IOException e) {
+//				e.printStackTrace();
+//				System.exit(1);
+//			}
+//		}
 		if (!shutdown) {
 			// Process the received datagram.
-			Message.printIncoming(receivePacket, "Client");
+			//Message.printIncoming(receivePacket, "Client");
+			if (opcode==write) {
+				try {
+					byte[] resp = new byte[4];
+					receivePacket = new DatagramPacket(resp,4);
+					sendReceiveSocket.receive(receivePacket);
+					port = receivePacket.getPort();
+					BufferedInputStream in = new BufferedInputStream(new FileInputStream(filename));
+					read(in,sendReceiveSocket,port);
+					in.close();
+
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			else if (opcode==read) {
+				System.out.println("Now we read.");
+				try {
+					BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream("outc.txt"));
+					write(out,sendReceiveSocket);
+					out.close();
+
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 
 	}
@@ -82,16 +115,6 @@ public class Client extends Stoppable{
 
 		//new Message(c).start();
 		c.sendAndReceive(write);
-		if (!c.shutdown) {
-			try {
-				BufferedInputStream in = new BufferedInputStream(new FileInputStream("C:/Users/Megan/workspace/text.txt"));
-				c.read(in, c.sendReceiveSocket,c.receivePacket.getPort());
-				in.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 
-			}
-		}
 	}
 }

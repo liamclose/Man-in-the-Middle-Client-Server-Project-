@@ -48,7 +48,7 @@ public class Intermediate extends Stoppable{
 	 */
 	public void forward() {
 		while (!shutdown) { //loop forever-ish
-			byte data[] = new byte[100];
+			byte data[] = new byte[516];
 			receivePacket = new DatagramPacket(data, data.length);
 			try {
 				receiveSocket.receive(receivePacket);

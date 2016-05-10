@@ -32,6 +32,7 @@ public class Server extends Stoppable{
 	}
 
 	public Server(DatagramPacket received) {
+		receivePacket = received;
 		int opcode = received.getData()[1];
 		if (opcode==1) {
 			System.out.println("Read request received.");
@@ -68,32 +69,17 @@ public class Server extends Stoppable{
 	}
 	
 	public void write(String filename) { // a lot of this can go in stoppable probably
+		BufferedOutputStream out;
 		try {
-			BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(filename));
+			out = new BufferedOutputStream(new FileOutputStream(filename));
 			sendSocket.send(sendPacket);
-			do {
-				byte[] data = new byte[516];
-				byte[] resp = new byte[4];
-				receivePacket = new DatagramPacket(data,516);
-				//validate and save after we get it
-				sendSocket.receive(receivePacket);
-				Message.printIncoming(receivePacket, "Server");
-				out.write(data,4,receivePacket.getLength()-4);
-				//write(out, data);
-				//do that better
-				System.arraycopy(writeAck,0,resp,0,4);
-				System.arraycopy(receivePacket.getData(), 2, resp, 2, 2);
-				sendPacket = new DatagramPacket(resp, resp.length,
-						receivePacket.getAddress(), receivePacket.getPort());
-				System.out.println("Ok.");
-				sendSocket.send(sendPacket);
-				Message.printOutgoing(sendPacket, this.toString());
-				System.out.println(receivePacket.getLength());
-			} while (receivePacket.getLength()==516);
-			out.close();
-		} catch (IOException e) {
+			super.write(out, sendSocket);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-			System.exit(1);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 			
 	}
@@ -134,7 +120,7 @@ public class Server extends Stoppable{
 			}
 			//if it passes the validation the Datagram is correctly formed, otherwise something went wrong
 			if (Message.validate(new String(receivePacket.getData(),0,receivePacket.getLength()))) {
-				Message.printIncoming(receivePacket, "Server");
+				Message.printIncoming(receivePacket, "Server"); //string not working for print
 
 				//wait 1 second
 				try {
