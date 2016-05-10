@@ -64,7 +64,7 @@ public class Server extends Stoppable{
 	{
 		while (!shutdown) {
 			timeout = false;
-			byte data[] = new byte[100];
+			byte data[] = new byte[516];
 			receivePacket = new DatagramPacket(data, data.length);
 
 			System.out.println(activeCount());
@@ -100,6 +100,7 @@ public class Server extends Stoppable{
 			}
 			else {
 				System.out.println("Invalid Datagram. Exiting now.");
+				Message.printIncoming(receivePacket, "test");
 				throw new IllegalArgumentException();
 			}
 			

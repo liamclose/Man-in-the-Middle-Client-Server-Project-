@@ -41,34 +41,6 @@ public class Message extends Thread{
 		return Pattern.matches("^\0(\001|\002).+\0(([oO][cC][tT][eE][tT])|([nN][eE][tT][aA][sS][cC][iI][iI]))\0$", data);
 	}
 	
-	public static byte[] read (String filename, int block) throws IOException {
-		BufferedInputStream in = new BufferedInputStream(new FileInputStream("C:/Users/Megan/workspace/test.txt"));
-		byte[] data = new byte[512];
-        int n;
-        
-        try {
-        	in.skip(block*512);
-			while (((n = in.read(data)) != -1)
-					&&(n != 512)) {
-			    //System.out.println(data[n]);
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        System.out.println("Hello world");
-        byte[] message = new byte[516];
-        message[0] = 0;
-        message[1] = 3;
-        message[2] = 0;
-        message[3] = 1;
-        for (int i = 0;i<512;i++) {
-        	System.out.println(new Character((char) data[i]));
-        	message[i+4] = data[i];
-        }
-        in.close();
-        return message;
-	}
 	
 	/*
 	 * formatRequest takes a filename and a format and an opcode (which corresponds to read or write)
