@@ -67,8 +67,8 @@ public class Server extends Stoppable{
 					//validate and save after we get it
 					sendSocket.receive(receivePacket);
 					Message.printIncoming(receivePacket, "Server");
-					
-					write(out, data);
+					out.write(data,4,receivePacket.getLength()-4);
+					//write(out, data);
 					//do that better
 					System.arraycopy(writeAck,0,resp,0,4);
 					System.arraycopy(receivePacket.getData(), 2, resp, 2, 2);

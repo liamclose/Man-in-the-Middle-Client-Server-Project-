@@ -84,7 +84,7 @@ public class Client extends Stoppable{
 		c.sendAndReceive(write);
 		if (!c.shutdown) {
 			try {
-				BufferedInputStream in = new BufferedInputStream(new FileInputStream("C:/Users/Megan/workspace/test.txt"));
+				BufferedInputStream in = new BufferedInputStream(new FileInputStream("C:/Users/Megan/workspace/text.txt"));
 				c.read(in, c.sendReceiveSocket,c.receivePacket.getPort());
 				in.close();
 			} catch (IOException e) {
