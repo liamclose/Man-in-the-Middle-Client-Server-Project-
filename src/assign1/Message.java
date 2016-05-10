@@ -9,12 +9,8 @@ import java.util.regex.Pattern;
 
 
 /*
- * TODO:
- *  -Closing intermediate/multithreading there?
- *  -Verbose/quiet
  *  -Test/normal
  *  -change ports
- *  -closing client mid request
  */
 
 
@@ -48,8 +44,16 @@ public class Message extends Thread{
 	}
 
 	//this probs matches invalid strings but so does the sample...
-	public static boolean validate(String data) {
-		return Pattern.matches("^\0(((\001|\002).+\0(([oO][cC][tT][eE][tT])|([nN][eE][tT][aA][sS][cC][iI][iI]))\0)|(\004..)|(\003...*))$", data);
+	public static boolean validate(DatagramPacket receivePacket) {
+		String data = new String(receivePacket.getData(),0,receivePacket.getLength());
+		return Pattern.matches("^\0(((\001|\002).+\0(([oO][cC][tT][eE][tT])|([nN][eE][tT][aA][sS][cC][iI][iI]))\0)|(\004(.|\012|\015)(.|\012|\015))|(\003(.|\012|\015){2,}))$", data);
+	}
+	
+	public static void main(String[] args) {
+		byte[] data = {0,3,127,33};
+		
+		DatagramPacket d = new DatagramPacket(data, 4);
+		System.out.println(validate(d));
 	}
 
 	public static int parseBlock(byte[] data) {

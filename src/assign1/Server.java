@@ -14,8 +14,8 @@ public class Server extends Stoppable{
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendSocket, receiveSocket;
 
-	public static final byte[] readAck = {0, 3, 0, 1};
-	public static final byte[] writeAck = {0, 4, 0, 0};
+	public static final byte[] dataOne = {0, 3, 0, 1};
+	public static final byte[] ackZero = {0, 4, 0, 0};
 	boolean readTransfer;
 
 	public Server()
@@ -38,12 +38,12 @@ public class Server extends Stoppable{
 		int opcode = received.getData()[1];
 		if (opcode==1) {
 			readTransfer = true;
-			sendPacket = new DatagramPacket(readAck, readAck.length,
+			sendPacket = new DatagramPacket(dataOne, dataOne.length,
 					received.getAddress(), received.getPort());
 		}
 		else if (opcode==2) {
 			readTransfer = false;
-			sendPacket = new DatagramPacket(writeAck, writeAck.length,
+			sendPacket = new DatagramPacket(ackZero, ackZero.length,
 					received.getAddress(), received.getPort());
 		}
 		try {
@@ -99,7 +99,7 @@ public class Server extends Stoppable{
 			receivePacket = new DatagramPacket(data, data.length);
 			// Block until a datagram packet is received from receiveSocket.
 			try {
-				receiveSocket.setSoTimeout(300);
+				receiveSocket.setSoTimeout(300); //timeout for quit purposes
 				receiveSocket.receive(receivePacket);
 			} catch (SocketTimeoutException e) {
 				timeout = true;
@@ -111,7 +111,7 @@ public class Server extends Stoppable{
 				System.exit(1);
 			}
 			//if it passes the validation the Datagram is correctly formed, otherwise something went wrong
-			if (Message.validate(new String(receivePacket.getData(),0,receivePacket.getLength()))) {
+			if (Message.validate(receivePacket)) {
 				Message.printIncoming(receivePacket, "Server",verbose); //string not working for print
 				new Server(receivePacket, verbose).start();
 

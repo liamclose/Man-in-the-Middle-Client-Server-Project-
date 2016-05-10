@@ -24,7 +24,6 @@ public class Stoppable extends Thread {
 		byte[] data = new byte[516];
 		try {
 			do {
-				
 				timeout = true;
 				receivePacket = new DatagramPacket(data,516);
 				//validate and save after we get it
@@ -33,14 +32,21 @@ public class Stoppable extends Thread {
 					try {
 						sendReceiveSocket.setSoTimeout(300);
 						sendReceiveSocket.receive(receivePacket);
+						if (!Message.validate(receivePacket)) {
+							System.out.print("Invalid packet.");
+							Message.printIncoming(receivePacket, "ERROR", true);
+							for (int i =0; i<516;i++) {
+								System.out.println(receivePacket.getData()[i]);
+							}
+							System.exit(0);
+						}
 					} catch (SocketTimeoutException e) {
 						timeout = true;
 						if (shutdown) {
 							System.exit(0);
 						}
 					}
-				}
-				
+				}				
 				port = receivePacket.getPort();
 				Message.printIncoming(receivePacket, "Write",verbose);
 				out.write(data,4,receivePacket.getLength()-4);
@@ -49,7 +55,6 @@ public class Stoppable extends Thread {
 						receivePacket.getAddress(), receivePacket.getPort());
 				sendReceiveSocket.send(sendPacket);
 				Message.printOutgoing(sendPacket, this.toString(),verbose);
-				System.out.println(receivePacket.getLength());
 			} while (receivePacket.getLength()==516);
 			out.close();
 		} catch (IOException e) {
@@ -88,6 +93,11 @@ public class Stoppable extends Thread {
 					try {
 						sendReceiveSocket.setSoTimeout(300);
 						sendReceiveSocket.receive(receivePacket);
+						if (!Message.validate(receivePacket)) {
+							//System.out.print("Invalid packet.");
+							Message.printIncoming(receivePacket, "ERROR", true);
+							System.exit(0);
+						}
 					} catch (SocketTimeoutException e) {
 						timeout = true;
 						if (shutdown) {
@@ -96,8 +106,6 @@ public class Stoppable extends Thread {
 					}
 				}
 				Message.printIncoming(receivePacket, "Client",verbose);
-				//clients above should change
-				//make the == a test rather than a print
 				if (!(Message.parseBlock(sendPacket.getData())==Message.parseBlock(message))) {
 					System.out.println("ERROR: Acknowledge does not match block sent "+ Message.parseBlock(sendPacket.getData()) + "    "+ Message.parseBlock(message));
 					return;
@@ -118,8 +126,8 @@ public class Stoppable extends Thread {
 				
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			System.exit(1);
 		}
 	}
 }

@@ -8,7 +8,7 @@ public class Client extends Stoppable{
 
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendReceiveSocket;
-	
+
 	int serverPort = 69;
 
 	public static final int READ= 1; //caps
@@ -25,7 +25,7 @@ public class Client extends Stoppable{
 			System.exit(1);
 		}
 	}
-	
+
 	/*
 	 * sendAndReceive takes an opcode as an argument and sends a request of that type
 	 * the hardcoded filename is test.txt and the format is specified to be octet.
@@ -37,7 +37,7 @@ public class Client extends Stoppable{
 		byte msg[] = Message.formatRequest(filename, format, opcode);
 		try {
 			sendPacket = new DatagramPacket(msg, msg.length,
-					InetAddress.getLocalHost(), 6000);
+					InetAddress.getLocalHost(), 6000); //SERVERPORT TO SUBMIT
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -141,15 +141,12 @@ public class Client extends Stoppable{
 				if (x.contains("y")||x.contains("Y")) {
 					c.serverPort = 23;
 				}
-				
+
 			}
 			else {
-				sc.reset();
+				sc.reset(); //clear scanner
 			}
 		}
-		
-		
-		//c.sendAndReceive(WRITE);
-
+		sc.close();
 	}
 }
