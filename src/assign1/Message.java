@@ -41,15 +41,7 @@ public class Message extends Thread{
 	
 	//this probs matches invalid strings but so does the sample...
 	public static boolean validate(String data) {
-		System.out.println(parseFilename(data));
 		return Pattern.matches("^\0(((\001|\002).+\0(([oO][cC][tT][eE][tT])|([nN][eE][tT][aA][sS][cC][iI][iI]))\0)|(\004..)|(\003...*))$", data);
-	}
-	
-	public static String parseFilename(String data) {
-		System.out.println(data);
-		String[] parts = Pattern.compile(data).split("\000");
-		System.out.println(data);
-		return parts[0];
 	}
 	
 	public static int parseBlock(byte[] data) {
@@ -68,6 +60,10 @@ public class Message extends Thread{
 		byte[] x = {0,3,0,1};
 		x = formatRequest("a.txt","octet",2);
 		System.out.println(validate(new String(x,0,x.length)));
+	}
+	
+	public static String parseFilename(String data) {
+		return data.split("\0")[1].substring(1);
 	}
 	
 	/*

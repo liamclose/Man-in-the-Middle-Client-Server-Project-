@@ -32,6 +32,7 @@ public class Server extends Stoppable{
 	}
 
 	public Server(DatagramPacket received) {
+		filename = Message.parseFilename(new String(received.getData(),0,received.getLength()));
 		receivePacket = received;
 		int opcode = received.getData()[1];
 		if (opcode==1) {
@@ -54,7 +55,7 @@ public class Server extends Stoppable{
 		}
 	}		
 
-	public void read(String filename) { //test this!
+	public void read() { //test this!
 		BufferedInputStream in;
 		try {
 			in = new BufferedInputStream(new FileInputStream (filename));
@@ -67,9 +68,11 @@ public class Server extends Stoppable{
 		}
 	}
 	
-	public void write(String filename) {
+	public void write() {
+		filename = "copy".concat(filename);
 		BufferedOutputStream out;
 		try {
+			System.out.println(filename);
 			out = new BufferedOutputStream(new FileOutputStream(filename));
 			sendSocket.send(sendPacket);
 			super.write(out, sendSocket);
@@ -80,11 +83,12 @@ public class Server extends Stoppable{
 	}
 	
 	public void run() {
+		System.out.println(filename);
 			if (!readTransfer) {
-				write("out.txt");
+				write();
 			}
 			else {
-				read("test.txt");
+				read();
 			}
 		sendSocket.close();
 	}
@@ -95,8 +99,8 @@ public class Server extends Stoppable{
 			timeout = false;
 			byte data[] = new byte[516];
 			receivePacket = new DatagramPacket(data, data.length);
-
-			System.out.println(activeCount());
+			
+			//System.out.println(activeCount());
 			// Block until a datagram packet is received from receiveSocket.
 			try {
 				receiveSocket.setSoTimeout(3000);

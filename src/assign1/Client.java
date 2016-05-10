@@ -23,10 +23,6 @@ public class Client extends Stoppable{
 			System.exit(1);
 		}
 	}
-
-	public static String parseFilename(String data) {
-		return data;
-	}
 	
 	/*
 	 * sendAndReceive takes an opcode as an argument and sends a request of that type
@@ -39,7 +35,6 @@ public class Client extends Stoppable{
 		System.out.println(filename);
 		String format = "ocTeT";
 		byte msg[] = Message.formatRequest(filename, format, opcode);
-
 		try {
 			sendPacket = new DatagramPacket(msg, msg.length,
 					InetAddress.getLocalHost(), 6000);
@@ -79,9 +74,10 @@ public class Client extends Stoppable{
 				}
 			}
 			else if (opcode==READ) {
+				filename = "copy".concat(filename);
 				System.out.println("Now we read.");
 				try {
-					BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream("outc.txt"));
+					BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(filename));
 					write(out,sendReceiveSocket);
 					out.close();
 
@@ -107,11 +103,13 @@ public class Client extends Stoppable{
 				System.out.println("Please enter a filename.");
 				c.filename = sc.next();
 				c.sendAndReceive(READ);
+				System.exit(0);
 			}
 			else if (x.contains("w")||x.contains("W")) {
 				System.out.println("Please enter a filename.");
 				c.filename = sc.next();
 				c.sendAndReceive(WRITE);
+				System.exit(0);
 			}
 			else if (x.contains("q")||x.contains("Q")) {
 				c.sendReceiveSocket.close();
