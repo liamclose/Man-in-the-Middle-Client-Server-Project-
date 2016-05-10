@@ -82,7 +82,7 @@ public class Client extends Stoppable{
 		//c.sendAndReceive(read); 
 		c.sendReceiveSocket.close();
 		try {
-			System.out.println(Message.read("C:/Users/Megan/workspace/test.txt", 1).length);
+			System.out.println(Message.read("C:/Users/Megan/workspace/test.txt", 0).length);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

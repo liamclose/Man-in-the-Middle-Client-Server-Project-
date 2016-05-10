@@ -43,10 +43,12 @@ public class Message extends Thread{
 	
 	public static byte[] read (String filename, int block) throws IOException {
 		BufferedInputStream in = new BufferedInputStream(new FileInputStream("C:/Users/Megan/workspace/test.txt"));
-		byte[] data = new byte[516];
+		byte[] data = new byte[512];
         int n;
+        
         try {
-			while (((n = in.read(data, block*512,512)) != -1)
+        	in.skip(block*512);
+			while (((n = in.read(data)) != -1)
 					&&(n != 512)) {
 			    //System.out.println(data[n]);
 			}
