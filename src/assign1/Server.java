@@ -45,53 +45,69 @@ public class Server extends Stoppable{
 			sendPacket = new DatagramPacket(writeAck, writeAck.length,
 					received.getAddress(), received.getPort());
 		}
-	}		
-
-
-	public void run() {
 		try {
 			sendSocket = new DatagramSocket();
 		} catch (SocketException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		try {
-			BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream("out.txt"));
-			if (!readTransfer) {
-				sendSocket.send(sendPacket);
+	}		
 
-				do {
-					byte[] data = new byte[516];
-					byte[] resp = new byte[4];
-					receivePacket = new DatagramPacket(data,516);
-					//validate and save after we get it
-					sendSocket.receive(receivePacket);
-					Message.printIncoming(receivePacket, "Server");
-					out.write(data,4,receivePacket.getLength()-4);
-					//write(out, data);
-					//do that better
-					System.arraycopy(writeAck,0,resp,0,4);
-					System.arraycopy(receivePacket.getData(), 2, resp, 2, 2);
-					sendPacket = new DatagramPacket(resp, resp.length,
-							receivePacket.getAddress(), receivePacket.getPort());
-					System.out.println("Ok.");
-					sendSocket.send(sendPacket);
-					Message.printOutgoing(sendPacket, this.toString());
-					System.out.println(receivePacket.getLength());
-				} while (receivePacket.getLength()==516);
-				out.close();
-			}
-			else {
-				//open file
-				//call read
-				//close file
-			}
+	public void read(String filename) { //test this!
+		BufferedInputStream in;
+		try {
+			in = new BufferedInputStream(new FileInputStream (filename));
+			super.read(in, sendSocket, receivePacket.getPort());
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public void write(String filename) { // a lot of this can go in stoppable probably
+		try {
+			BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(filename));
+			sendSocket.send(sendPacket);
+			do {
+				byte[] data = new byte[516];
+				byte[] resp = new byte[4];
+				receivePacket = new DatagramPacket(data,516);
+				//validate and save after we get it
+				sendSocket.receive(receivePacket);
+				Message.printIncoming(receivePacket, "Server");
+				out.write(data,4,receivePacket.getLength()-4);
+				//write(out, data);
+				//do that better
+				System.arraycopy(writeAck,0,resp,0,4);
+				System.arraycopy(receivePacket.getData(), 2, resp, 2, 2);
+				sendPacket = new DatagramPacket(resp, resp.length,
+						receivePacket.getAddress(), receivePacket.getPort());
+				System.out.println("Ok.");
+				sendSocket.send(sendPacket);
+				Message.printOutgoing(sendPacket, this.toString());
+				System.out.println(receivePacket.getLength());
+			} while (receivePacket.getLength()==516);
+			out.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
+			
+	}
+	
+	public void run() {
+			
+			if (!readTransfer) {
+				write("out.txt");
+			}
+			else {
+				read("test.txt");
+			}
+		
 		System.out.println("All done");
-
 		sendSocket.close();
 	}
 

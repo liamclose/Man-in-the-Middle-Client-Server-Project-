@@ -15,10 +15,6 @@ public class Stoppable extends Thread {
 		shutdown = true;
 	}
 	
-	public void write(BufferedOutputStream out, byte[] data) throws IOException {
-				out.write(data,4,data.length-4);
-	}
-
 	public void read(BufferedInputStream in, DatagramSocket sendReceiveSocket, int port) throws IOException {
 		int n;
 		byte block1 = 0;
