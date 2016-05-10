@@ -28,8 +28,7 @@ public class Client extends Stoppable{
 	 * Once it has sent the request it waits for the server to respond.
 	 */
 	public void sendAndReceive(int opcode) {
-		while (timeout&&!shutdown) {
-			timeout = false;
+			timeout = true;
 			String s = "test.txt";
 			String format = "ocTeT";
 			byte msg[] = Message.formatRequest(s, format, opcode);
@@ -54,7 +53,8 @@ public class Client extends Stoppable{
 			// to 100 bytes long (the length of the byte array).
 			byte data[] = new byte[100];
 			receivePacket = new DatagramPacket(data, data.length);
-			while (!shutdown) {
+			while (timeout&&!shutdown) {
+				timeout = false;
 				try {
 					// Block until a datagram is received via sendReceiveSocket. 
 					sendReceiveSocket.setSoTimeout(3000);
@@ -68,7 +68,6 @@ public class Client extends Stoppable{
 					System.exit(1);
 				}
 			}
-		}
 		if (!shutdown) {
 			// Process the received datagram.
 			Message.printIncoming(receivePacket, "Client");
@@ -79,8 +78,14 @@ public class Client extends Stoppable{
 	public static void main(String args[])
 	{
 		Client c = new Client();
-		new Message(c).start();
-		c.sendAndReceive(read); 
+		//new Message(c).start();
+		//c.sendAndReceive(read); 
 		c.sendReceiveSocket.close();
+		try {
+			System.out.println(Message.read("C:/Users/Megan/workspace/test.txt", 1).length);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

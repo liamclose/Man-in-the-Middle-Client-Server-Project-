@@ -8,6 +8,5 @@ public class Stoppable extends Thread {
 	public void setShutdown() {
 		shutdown = true;
 	}
-	
-	
+		
 }
