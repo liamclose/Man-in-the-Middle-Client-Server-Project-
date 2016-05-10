@@ -37,10 +37,31 @@ public class Message extends Thread{
 		}
 	}
 	
+	//public static boolean validate(String data) {
+		//return Pattern.matches("^\0(\001|\002).+\0([oO][cC][tT][eE][tT])|([nN][eE][tT][aA][sS][cC][iI][iI])\0$", data);
+	//}
+	
 	public static boolean validate(String data) {
-		return Pattern.matches("^\0(\001|\002).+\0(([oO][cC][tT][eE][tT])|([nN][eE][tT][aA][sS][cC][iI][iI]))\0$", data);
+		return Pattern.matches("^\0(((\001|\002).+\0(([oO][cC][tT][eE][tT])|([nN][eE][tT][aA][sS][cC][iI][iI]))\0)|(\004..)|(\003...*))$", data);
 	}
 	
+	public static int parseBlock(byte[] data) {
+		int x = (int) data[2];
+		int y = (int) data[3];
+		if (x<0) {
+			x = 256+x;
+		}
+		if (y<0) {
+			y = 256+y;
+		}
+		System.out.println(""+x + y);
+		return 256*x+y;
+	}
+	public static void main(String[] args) {
+		byte[] x = {0,3,0,1};
+		x = formatRequest("a.txt","octet",2);
+		System.out.println(validate(new String(x,0,x.length)));
+	}
 	
 	/*
 	 * formatRequest takes a filename and a format and an opcode (which corresponds to read or write)
@@ -56,7 +77,6 @@ public class Message extends Thread{
 		for (int i = 0;i<l;i++) {
 			result[i+2] = msg[i];
 		}
-		result[4] = 0;
 		result[l+2] = 0;
 		for (int i = 0;i<format.length();i++) {
 			result[l+3+i] = format.getBytes()[i];

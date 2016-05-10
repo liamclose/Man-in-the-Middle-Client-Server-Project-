@@ -33,6 +33,7 @@ public class Server extends Stoppable{
 	public Server(DatagramPacket received) {
 		int opcode = received.getData()[1];
 		if (opcode==1) {
+			System.out.println("Read request received.");
 			sendPacket = new DatagramPacket(readAck, readAck.length,
 					received.getAddress(), received.getPort());
 		}
@@ -41,7 +42,8 @@ public class Server extends Stoppable{
 			sendPacket = new DatagramPacket(writeAck, writeAck.length,
 					received.getAddress(), received.getPort());
 		}
-	}
+	}		
+
 
 	public void run() {
 		try {
@@ -51,12 +53,30 @@ public class Server extends Stoppable{
 			System.exit(1);
 		}
 		try {
+			System.out.println("Received data block");
 			sendSocket.send(sendPacket);
-			Message.printOutgoing(sendPacket, this.toString());
+			
+			do {
+				byte[] data = new byte[516];
+				byte[] resp = new byte[4];
+				receivePacket = new DatagramPacket(data,516);
+				System.out.println("why");
+				sendSocket.receive(receivePacket);
+				Message.printIncoming(receivePacket, "Server");
+				System.arraycopy(writeAck,0,resp,0,4);
+				System.arraycopy(receivePacket.getData(), 2, resp, 2, 2);
+				sendPacket = new DatagramPacket(resp, resp.length,
+						receivePacket.getAddress(), receivePacket.getPort());
+				System.out.println("Ok.");
+				sendSocket.send(sendPacket);
+				Message.printOutgoing(sendPacket, this.toString());
+				System.out.println(receivePacket.getLength());
+			} while (receivePacket.getLength()==516);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
+		System.out.println("All done");
 		sendSocket.close();
 	}
 
@@ -96,14 +116,15 @@ public class Server extends Stoppable{
 
 			}
 			else if (timeout) {
-				
+
 			}
 			else {
 				System.out.println("Invalid Datagram. Exiting now.");
 				Message.printIncoming(receivePacket, "test");
+				new Server(receivePacket).start();
 				throw new IllegalArgumentException();
 			}
-			
+
 		}
 		receiveSocket.close();
 	}
@@ -112,7 +133,7 @@ public class Server extends Stoppable{
 	{
 		System.out.println("Press any character to quit.");
 		Server c = new Server();
-		new Message(c).start();
+		//new Message(c).start();
 		c.receiveAndReply();
 		c.receiveSocket.close(); //close the receiving socket
 	}
