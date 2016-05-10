@@ -1,6 +1,6 @@
 package assign1;
 
-import java.io.BufferedInputStream;
+import java.io.*;
 import java.io.IOException;
 import java.net.*;
 import java.net.InetAddress;
@@ -13,6 +13,10 @@ public class Stoppable extends Thread {
 
 	public void setShutdown() {
 		shutdown = true;
+	}
+	
+	public void write(BufferedOutputStream out, byte[] data) throws IOException {
+				out.write(data,4,data.length-4);
 	}
 
 	public void read(BufferedInputStream in, DatagramSocket sendReceiveSocket, int port) throws IOException {

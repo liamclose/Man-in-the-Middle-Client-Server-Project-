@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 /*
  * TODO:
  * 	-File Transfer
- * 		-Reading from file
+ * 		-Reading from file - mostly done?
  * 		-Writing to file
  * 		-Formatting messages/updating byte numbers/etc
  *  -Read Me

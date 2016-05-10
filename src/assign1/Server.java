@@ -56,7 +56,8 @@ public class Server extends Stoppable{
 			System.exit(1);
 		}
 		try {
-			if (readTransfer) {
+			BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream("out.txt"));
+			if (!readTransfer) {
 				sendSocket.send(sendPacket);
 
 				do {
@@ -66,6 +67,8 @@ public class Server extends Stoppable{
 					//validate and save after we get it
 					sendSocket.receive(receivePacket);
 					Message.printIncoming(receivePacket, "Server");
+					
+					write(out, data);
 					//do that better
 					System.arraycopy(writeAck,0,resp,0,4);
 					System.arraycopy(receivePacket.getData(), 2, resp, 2, 2);
@@ -76,6 +79,7 @@ public class Server extends Stoppable{
 					Message.printOutgoing(sendPacket, this.toString());
 					System.out.println(receivePacket.getLength());
 				} while (receivePacket.getLength()==516);
+				out.close();
 			}
 			else {
 				//open file
