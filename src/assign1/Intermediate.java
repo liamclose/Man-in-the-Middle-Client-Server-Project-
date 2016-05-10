@@ -25,7 +25,7 @@ public class Intermediate extends Stoppable{
 			System.exit(1);
 		}
 	}
-
+//what a mess.....
 	public Intermediate(DatagramPacket received) {
 		replyPort = received.getPort();
 		replyAddress = received.getAddress();

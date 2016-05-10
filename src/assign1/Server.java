@@ -16,6 +16,7 @@ public class Server extends Stoppable{
 
 	public static final byte[] readAck = {0, 3, 0, 1};
 	public static final byte[] writeAck = {0, 4, 0, 0};
+	boolean readTransfer;
 
 	public Server()
 	{
@@ -34,10 +35,12 @@ public class Server extends Stoppable{
 		int opcode = received.getData()[1];
 		if (opcode==1) {
 			System.out.println("Read request received.");
+			readTransfer = true;
 			sendPacket = new DatagramPacket(readAck, readAck.length,
 					received.getAddress(), received.getPort());
 		}
 		else if (opcode==2) {
+			readTransfer = false;
 			System.out.println("Write request received.");
 			sendPacket = new DatagramPacket(writeAck, writeAck.length,
 					received.getAddress(), received.getPort());
@@ -53,30 +56,38 @@ public class Server extends Stoppable{
 			System.exit(1);
 		}
 		try {
-			System.out.println("Received data block");
-			sendSocket.send(sendPacket);
-			
-			do {
-				byte[] data = new byte[516];
-				byte[] resp = new byte[4];
-				receivePacket = new DatagramPacket(data,516);
-				System.out.println("why");
-				sendSocket.receive(receivePacket);
-				Message.printIncoming(receivePacket, "Server");
-				System.arraycopy(writeAck,0,resp,0,4);
-				System.arraycopy(receivePacket.getData(), 2, resp, 2, 2);
-				sendPacket = new DatagramPacket(resp, resp.length,
-						receivePacket.getAddress(), receivePacket.getPort());
-				System.out.println("Ok.");
+			if (readTransfer) {
 				sendSocket.send(sendPacket);
-				Message.printOutgoing(sendPacket, this.toString());
-				System.out.println(receivePacket.getLength());
-			} while (receivePacket.getLength()==516);
+
+				do {
+					byte[] data = new byte[516];
+					byte[] resp = new byte[4];
+					receivePacket = new DatagramPacket(data,516);
+					//validate and save after we get it
+					sendSocket.receive(receivePacket);
+					Message.printIncoming(receivePacket, "Server");
+					//do that better
+					System.arraycopy(writeAck,0,resp,0,4);
+					System.arraycopy(receivePacket.getData(), 2, resp, 2, 2);
+					sendPacket = new DatagramPacket(resp, resp.length,
+							receivePacket.getAddress(), receivePacket.getPort());
+					System.out.println("Ok.");
+					sendSocket.send(sendPacket);
+					Message.printOutgoing(sendPacket, this.toString());
+					System.out.println(receivePacket.getLength());
+				} while (receivePacket.getLength()==516);
+			}
+			else {
+				//open file
+				//call read
+				//close file
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
 		System.out.println("All done");
+
 		sendSocket.close();
 	}
 

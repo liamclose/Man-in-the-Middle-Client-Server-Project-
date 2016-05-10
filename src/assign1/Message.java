@@ -18,6 +18,8 @@ import java.util.regex.Pattern;
  *  -Testing
  *  -Ask TA about verbose/quiet mode and UML collaboration diagrams
  *  -Closing intermediate/multithreading there?
+ *  -Verbose/quiet
+ *  -Test/normal
  */
 
 
@@ -37,10 +39,7 @@ public class Message extends Thread{
 		}
 	}
 	
-	//public static boolean validate(String data) {
-		//return Pattern.matches("^\0(\001|\002).+\0([oO][cC][tT][eE][tT])|([nN][eE][tT][aA][sS][cC][iI][iI])\0$", data);
-	//}
-	
+	//this probs matches invalid strings but so does the sample...
 	public static boolean validate(String data) {
 		return Pattern.matches("^\0(((\001|\002).+\0(([oO][cC][tT][eE][tT])|([nN][eE][tT][aA][sS][cC][iI][iI]))\0)|(\004..)|(\003...*))$", data);
 	}

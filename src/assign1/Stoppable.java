@@ -43,8 +43,9 @@ public class Stoppable extends Thread {
 				System.out.println("And here we are");
 				receivePacket = new DatagramPacket(resp,4);
 				sendReceiveSocket.receive(receivePacket);
-				Message.printIncoming(receivePacket, "got");
-				
+				Message.printIncoming(receivePacket, "Client");
+				//clients above should change
+				//make the == a test rather than a print
 				System.out.println(""+port+(Message.parseBlock(sendPacket.getData())==Message.parseBlock(message)));
 				
 			}

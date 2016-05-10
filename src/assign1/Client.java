@@ -11,6 +11,7 @@ public class Client extends Stoppable{
 	public static final int read = 1;
 	public static final int write = 2;
 
+	// validation client side?
 	public Client()
 	{
 		try {
