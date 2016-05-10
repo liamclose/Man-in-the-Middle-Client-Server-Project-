@@ -2,14 +2,15 @@ package assign1;
 
 import java.io.*;
 import java.net.*;
+import java.util.Scanner;
 
 public class Client extends Stoppable{
 
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendReceiveSocket;
 
-	public static final int read = 1; //caps
-	public static final int write = 2;
+	public static final int READ= 1; //caps
+	public static final int WRITE = 2;
 
 	// validation client side?
 	public Client()
@@ -23,14 +24,19 @@ public class Client extends Stoppable{
 		}
 	}
 
+	public static String parseFilename(String data) {
+		return data;
+	}
+	
 	/*
 	 * sendAndReceive takes an opcode as an argument and sends a request of that type
 	 * the hardcoded filename is test.txt and the format is specified to be octet.
 	 * Once it has sent the request it waits for the server to respond.
 	 */
 	public void sendAndReceive(int opcode) {
+		System.out.println(opcode);
 		timeout = true;
-		String filename = "test.txt";
+		System.out.println(filename);
 		String format = "ocTeT";
 		byte msg[] = Message.formatRequest(filename, format, opcode);
 
@@ -50,29 +56,11 @@ public class Client extends Stoppable{
 			e.printStackTrace();
 			System.exit(1);
 		}
-		// Construct a DatagramPacket for receiving packets up 
-		// to 100 bytes long (the length of the byte array).
 		byte data[] = new byte[516];
 		receivePacket = new DatagramPacket(data, data.length);
-//		while (timeout&&!shutdown) {
-//			timeout = false;
-//			try {
-//				// Block until a datagram is received via sendReceiveSocket. 
-//				//sendReceiveSocket.setSoTimeout(3000);
-//				sendReceiveSocket.receive(receivePacket);
-//			} 
-//			catch (SocketTimeoutException e) {
-//				timeout = true;
-//			}
-//			catch(IOException e) {
-//				e.printStackTrace();
-//				System.exit(1);
-//			}
-//		}
 		if (!shutdown) {
 			// Process the received datagram.
-			//Message.printIncoming(receivePacket, "Client");
-			if (opcode==write) {
+			if (opcode==WRITE) {
 				try {
 					byte[] resp = new byte[4];
 					receivePacket = new DatagramPacket(resp,4);
@@ -90,16 +78,13 @@ public class Client extends Stoppable{
 					e.printStackTrace();
 				}
 			}
-			else if (opcode==read) {
+			else if (opcode==READ) {
 				System.out.println("Now we read.");
 				try {
 					BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream("outc.txt"));
 					write(out,sendReceiveSocket);
 					out.close();
 
-				} catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
 				}
 				catch (IOException e) {
 					e.printStackTrace();
@@ -112,9 +97,33 @@ public class Client extends Stoppable{
 	public static void main(String args[])
 	{
 		Client c = new Client();
-
+		String x;
+		Scanner sc = new Scanner(System.in);
+		System.out.println("(R)ead, (w)rite, or (q)uit?");
+		while(sc.hasNext()) {
+			x = sc.next();
+			System.out.println(x.contains("r"));
+			if (x.contains("R")||x.contains("r")) {
+				System.out.println("Please enter a filename.");
+				c.filename = sc.next();
+				c.sendAndReceive(READ);
+			}
+			else if (x.contains("w")||x.contains("W")) {
+				System.out.println("Please enter a filename.");
+				c.filename = sc.next();
+				c.sendAndReceive(WRITE);
+			}
+			else if (x.contains("q")||x.contains("Q")) {
+				c.sendReceiveSocket.close();
+				System.exit(0);
+			}
+			else {
+				sc.reset();
+			}
+		}
+		
 		//new Message(c).start();
-		c.sendAndReceive(write);
+		//c.sendAndReceive(WRITE);
 
 	}
 }

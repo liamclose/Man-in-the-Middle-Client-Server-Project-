@@ -8,11 +8,11 @@ public class Stoppable extends Thread {
 	protected boolean timeout;
 	DatagramPacket sendPacket,receivePacket;
 	int port;
-
+	String filename;
 
 	public void setShutdown() {
 		shutdown = true;
-	}
+	} //does not work for client rn
 	
 	public void write(BufferedOutputStream out, DatagramSocket sendReceiveSocket) throws IOException {
 		System.out.println("inside write");

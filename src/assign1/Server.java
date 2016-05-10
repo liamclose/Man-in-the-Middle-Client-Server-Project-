@@ -65,35 +65,27 @@ public class Server extends Stoppable{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
 	}
 	
-	public void write(String filename) { // a lot of this can go in stoppable probably
+	public void write(String filename) {
 		BufferedOutputStream out;
 		try {
 			out = new BufferedOutputStream(new FileOutputStream(filename));
 			sendSocket.send(sendPacket);
 			super.write(out, sendSocket);
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-			
 	}
 	
 	public void run() {
-			
 			if (!readTransfer) {
 				write("out.txt");
 			}
 			else {
 				read("test.txt");
 			}
-		
-		System.out.println("All done");
 		sendSocket.close();
 	}
 
@@ -121,14 +113,6 @@ public class Server extends Stoppable{
 			//if it passes the validation the Datagram is correctly formed, otherwise something went wrong
 			if (Message.validate(new String(receivePacket.getData(),0,receivePacket.getLength()))) {
 				Message.printIncoming(receivePacket, "Server"); //string not working for print
-
-				//wait 1 second
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e ) {
-					e.printStackTrace();
-					System.exit(1);
-				}
 				new Server(receivePacket).start();
 
 			}
@@ -150,7 +134,7 @@ public class Server extends Stoppable{
 	{
 		System.out.println("Press any character to quit.");
 		Server c = new Server();
-		//new Message(c).start();
+		new Message(c).start();
 		c.receiveAndReply();
 		c.receiveSocket.close(); //close the receiving socket
 	}
