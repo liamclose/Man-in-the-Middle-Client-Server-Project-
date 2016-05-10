@@ -11,6 +11,8 @@ public class Client extends Stoppable{
 
 	public static final int READ= 1; //caps
 	public static final int WRITE = 2;
+	public boolean test;
+	public boolean verbose;
 
 	// validation client side?
 	public Client()
@@ -59,7 +61,19 @@ public class Client extends Stoppable{
 				try {
 					byte[] resp = new byte[4];
 					receivePacket = new DatagramPacket(resp,4);
-					sendReceiveSocket.receive(receivePacket);
+					while (timeout) {
+						System.out.println("timing out....");
+						timeout = false;
+						try {
+							sendReceiveSocket.setSoTimeout(3000);
+							sendReceiveSocket.receive(receivePacket);
+						} catch (SocketTimeoutException e) {
+							timeout = true;
+							if (shutdown) {
+								System.exit(0);
+							}
+						}
+					}
 					port = receivePacket.getPort();
 					BufferedInputStream in = new BufferedInputStream(new FileInputStream(filename));
 					read(in,sendReceiveSocket,port);
@@ -102,12 +116,16 @@ public class Client extends Stoppable{
 			if (x.contains("R")||x.contains("r")) {
 				System.out.println("Please enter a filename.");
 				c.filename = sc.next();
+				sc.reset();
+				new Message(c).start();
 				c.sendAndReceive(READ);
 				System.exit(0);
 			}
 			else if (x.contains("w")||x.contains("W")) {
 				System.out.println("Please enter a filename.");
 				c.filename = sc.next();
+				sc.reset();
+				new Message(c).start();
 				c.sendAndReceive(WRITE);
 				System.exit(0);
 			}
@@ -120,7 +138,7 @@ public class Client extends Stoppable{
 			}
 		}
 		
-		//new Message(c).start();
+		
 		//c.sendAndReceive(WRITE);
 
 	}

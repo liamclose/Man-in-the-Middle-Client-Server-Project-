@@ -127,7 +127,9 @@ public class Server extends Stoppable{
 				System.out.println("Invalid Datagram. Exiting now.");
 				Message.printIncoming(receivePacket, "test");
 				new Server(receivePacket).start();
-				throw new IllegalArgumentException();
+				System.out.println(activeCount());
+				//System.exit(1);
+				throw new IllegalArgumentException("Invalid Packet");
 			}
 
 		}

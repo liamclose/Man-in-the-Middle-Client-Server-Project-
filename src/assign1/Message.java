@@ -10,16 +10,11 @@ import java.util.regex.Pattern;
 
 /*
  * TODO:
- * 	-File Transfer
- * 		-Reading from file - mostly done?
- * 		-Writing to file
- * 		-Formatting messages/updating byte numbers/etc
- *  -Read Me
- *  -Testing
- *  -Ask TA about verbose/quiet mode and UML collaboration diagrams
  *  -Closing intermediate/multithreading there?
  *  -Verbose/quiet
  *  -Test/normal
+ *  -change ports
+ *  -closing client mid request
  */
 
 
@@ -55,11 +50,6 @@ public class Message extends Thread{
 		}
 		System.out.println(""+x + y);
 		return 256*x+y;
-	}
-	public static void main(String[] args) {
-		byte[] x = {0,3,0,1};
-		x = formatRequest("a.txt","octet",2);
-		System.out.println(validate(new String(x,0,x.length)));
 	}
 	
 	public static String parseFilename(String data) {
@@ -102,11 +92,10 @@ public class Message extends Thread{
 			System.out.print(" ");
 		}
 		String received = new String(p.getData(),0,len);   
-		System.out.println(received);
 		System.out.println("\nString form: " + received + "\n");
 	}
 
-	//prints information about an outfoing packet
+	//prints information about an outgoing packet
 	public static void printOutgoing(DatagramPacket p, String name) {
 		System.out.println(name + ": packet sent.");
 		System.out.println("To host: " + p.getAddress());

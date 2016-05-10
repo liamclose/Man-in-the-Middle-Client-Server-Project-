@@ -13,7 +13,7 @@ public class Stoppable extends Thread {
 	public void setShutdown() {
 		shutdown = true;
 	} //does not work for client rn
-	
+
 	public void write(BufferedOutputStream out, DatagramSocket sendReceiveSocket) throws IOException {
 		System.out.println("inside write");
 		byte[] resp = new byte[4];
@@ -27,12 +27,23 @@ public class Stoppable extends Thread {
 			do {
 				receivePacket = new DatagramPacket(data,516);
 				//validate and save after we get it
-				sendReceiveSocket.receive(receivePacket);
+				while (timeout) {
+					System.out.println("timing out....");
+					timeout = false;
+					try {
+						sendReceiveSocket.setSoTimeout(3000);
+						sendReceiveSocket.receive(receivePacket);
+					} catch (SocketTimeoutException e) {
+						timeout = true;
+						if (shutdown) {
+							System.exit(0);
+						}
+					}
+				}
 				port = receivePacket.getPort();
-				Message.printIncoming(receivePacket, "Server"); //fix
+				Message.printIncoming(receivePacket, ""); //fix
 				System.out.println("got some data?");
 				out.write(data,4,receivePacket.getLength()-4);
-				//do that better
 				System.arraycopy(receivePacket.getData(), 2, resp, 2, 2);
 				sendPacket = new DatagramPacket(resp, resp.length,
 						receivePacket.getAddress(), receivePacket.getPort());
@@ -47,14 +58,13 @@ public class Stoppable extends Thread {
 			System.exit(1);
 		}
 	}
-	
+
 	public void read(BufferedInputStream in, DatagramSocket sendReceiveSocket, int port) throws IOException {
 		int n;
 		byte block1 = 0;
 		byte block2 = 0;
 		byte[] data = new byte[512];
 		byte[] resp = new byte[4];
-		
 		try {
 			while (((n = in.read(data)) != -1)) {
 				if ((int) block2 ==-1)
@@ -71,21 +81,34 @@ public class Stoppable extends Thread {
 					message[i+4] = data[i];
 				}
 				sendPacket = new DatagramPacket(message,n+4,InetAddress.getLocalHost(),port);
-				
+
 				Message.printOutgoing(sendPacket, "Client");
 				sendReceiveSocket.send(sendPacket);
 				System.out.println("And here we are");
 				receivePacket = new DatagramPacket(resp,4);
-				sendReceiveSocket.receive(receivePacket);
+				timeout = true;
+				while (timeout) {
+					System.out.println("timing out....");
+					timeout = false;
+					try {
+						sendReceiveSocket.setSoTimeout(3000);
+						sendReceiveSocket.receive(receivePacket);
+					} catch (SocketTimeoutException e) {
+						timeout = true;
+						if (shutdown) {
+							System.exit(0);
+						}
+					}
+				}
 				Message.printIncoming(receivePacket, "Client");
 				//clients above should change
 				//make the == a test rather than a print
 				if (!(Message.parseBlock(sendPacket.getData())==Message.parseBlock(message))) {
-					System.out.println("ERROR"+ Message.parseBlock(sendPacket.getData()) + "    "+ Message.parseBlock(message));
+					System.out.println("ERROR: Acknowledge does not match block sent "+ Message.parseBlock(sendPacket.getData()) + "    "+ Message.parseBlock(message));
 					return;
 				}
 				System.out.println(""+port);
-				
+
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
