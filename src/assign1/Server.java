@@ -99,7 +99,7 @@ public class Server extends Stoppable{
 			receivePacket = new DatagramPacket(data, data.length);
 			// Block until a datagram packet is received from receiveSocket.
 			try {
-				receiveSocket.setSoTimeout(3000);
+				receiveSocket.setSoTimeout(300);
 				receiveSocket.receive(receivePacket);
 			} catch (SocketTimeoutException e) {
 				timeout = true;

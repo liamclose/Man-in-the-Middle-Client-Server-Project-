@@ -8,6 +8,8 @@ public class Client extends Stoppable{
 
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendReceiveSocket;
+	
+	int serverPort = 69;
 
 	public static final int READ= 1; //caps
 	public static final int WRITE = 2;
@@ -60,7 +62,7 @@ public class Client extends Stoppable{
 					while (timeout) {
 						timeout = false;
 						try {
-							sendReceiveSocket.setSoTimeout(3000);
+							sendReceiveSocket.setSoTimeout(300);
 							sendReceiveSocket.receive(receivePacket);
 						} catch (SocketTimeoutException e) {
 							timeout = true;
@@ -106,7 +108,6 @@ public class Client extends Stoppable{
 		System.out.println("(R)ead, (w)rite, (o)ptions, or (q)uit?");
 		while(sc.hasNext()) {
 			x = sc.next();
-			System.out.println(x.contains("r"));
 			if (x.contains("R")||x.contains("r")) {
 				System.out.println("Please enter a filename.");
 				c.filename = sc.next();
@@ -138,7 +139,7 @@ public class Client extends Stoppable{
 				x = sc.next();
 				sc.reset();
 				if (x.contains("y")||x.contains("Y")) {
-					c.test = true;
+					c.serverPort = 23;
 				}
 				
 			}
