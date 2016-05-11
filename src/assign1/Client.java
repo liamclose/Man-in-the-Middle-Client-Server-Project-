@@ -37,7 +37,7 @@ public class Client extends Stoppable{
 		byte msg[] = Message.formatRequest(filename, format, opcode);
 		try {
 			sendPacket = new DatagramPacket(msg, msg.length,
-					InetAddress.getLocalHost(), 6000); //SERVERPORT TO SUBMIT
+					InetAddress.getLocalHost(), serverPort); //SERVERPORT TO SUBMIT  CHANGED
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 			System.exit(1);

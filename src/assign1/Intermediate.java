@@ -10,7 +10,7 @@ import java.net.UnknownHostException;
 public class Intermediate extends Stoppable{
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket serverSideSocket, receiveSocket, replySocket;
-	int replyPort;
+	int replyPort, serverPort;
 	InetAddress replyAddress;
 	private boolean shutdown = false;
 
@@ -19,27 +19,57 @@ public class Intermediate extends Stoppable{
 			//create the two sockets which always exist, one on port 23 to receive requests from the client
 			//and one on a random port to communicate with the server
 			serverSideSocket = new DatagramSocket();
-			receiveSocket = new DatagramSocket(6001);
+			receiveSocket = new DatagramSocket(23);
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
 		}
 	}
-//what a mess.....
-	public Intermediate(DatagramPacket received) {
-		replyPort = received.getPort();
-		replyAddress = received.getAddress();
-		receivePacket = received;
-	}
 
-	public void run() {
+	public Intermediate(DatagramPacket received,boolean verbose, int port) {
+		this.verbose = verbose;
+		filename = Message.parseFilename(new String(received.getData(),0,received.getLength()));
+		receivePacket = received;
 		try {
-			sendPacket = new DatagramPacket(receivePacket.getData(),receivePacket.getLength(),InetAddress.getLocalHost(),6000);
-		} catch (UnknownHostException e) {
+			serverSideSocket = new DatagramSocket();
+			replySocket = new DatagramSocket();
+			replyPort = port; 
+			serverPort = received.getPort();
+			replyAddress = received.getAddress();
+			receivePacket = received;
+		} catch (SocketException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		
+	}	
+
+	public void run() {
+		try {
+			
+			sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),InetAddress.getLocalHost(),69);
+			serverSideSocket.send(sendPacket);
+			while(true){				
+				byte data[] = new byte[516];
+				receivePacket = new DatagramPacket(data, data.length);
+				System.out.println("expected");
+				serverSideSocket.receive(receivePacket);
+				serverPort = receivePacket.getPort();
+				Message.printIncoming(receivePacket, "Intermediate Host",verbose);
+				sendPacket = new DatagramPacket(receivePacket.getData(),receivePacket.getLength(),InetAddress.getLocalHost(),replyPort); 
+				replySocket.send(sendPacket);
+				Message.printOutgoing(sendPacket, "Intermediate Host",verbose);
+				replySocket.receive(receivePacket);
+				Message.printIncoming(receivePacket, "Intermediate Host",verbose);
+				sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),InetAddress.getLocalHost(),serverPort);
+				serverSideSocket.send(sendPacket);
+			}
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+			System.exit(1);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 	/*
@@ -50,6 +80,7 @@ public class Intermediate extends Stoppable{
 		while (!shutdown) { //loop forever-ish
 			byte data[] = new byte[516];
 			receivePacket = new DatagramPacket(data, data.length);
+
 			try {
 				receiveSocket.receive(receivePacket);
 			} catch (IOException e) {
@@ -58,45 +89,47 @@ public class Intermediate extends Stoppable{
 			}
 
 			Message.printIncoming(receivePacket, "Intermediate Host",verbose);
-			int len = receivePacket.getLength();
+			int len = receivePacket.getLength();			
+			replyPort = receivePacket.getPort();
 
 			try {
 				sendPacket = new DatagramPacket(data, len, //create the packet that will be sent to the server
-						InetAddress.getLocalHost(), 6000);
+						InetAddress.getLocalHost(), 69);
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 				System.exit(1);
 			}
-			try {
-				serverSideSocket.send(sendPacket); //send the packet to the server
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
-			Message.printOutgoing(sendPacket, "Intermediate Host",verbose);
-			try {
-				serverSideSocket.receive(receivePacket);
-			}
-			catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
-			Message.printIncoming(receivePacket, "Intermediate Host",verbose);
-			len = receivePacket.getLength();
-			sendPacket = new DatagramPacket(data, len, replyAddress, replyPort); //new packet to send back to client
-			try {
-				replySocket = new DatagramSocket(); //create a new socket to reply to client
-			} catch (SocketException e1) {
-				e1.printStackTrace();
-			}
-			try {
-				replySocket.send(sendPacket); //send the reply on to the client
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
-			Message.printOutgoing(sendPacket, "Intermediate Host",verbose);
-			replySocket.close(); //close socket once message sent to client
+//			try {
+//				serverSideSocket.send(sendPacket); //send the packet to the server
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//				System.exit(1);
+//			}
+//			Message.printOutgoing(sendPacket, "Intermediate Host",verbose);
+//			try {
+//				serverSideSocket.receive(receivePacket);
+//			}
+//			catch (IOException e) {
+//				e.printStackTrace();
+//				System.exit(1);
+//			}
+//			Message.printIncoming(receivePacket, "Intermediate Host",verbose);
+			new Intermediate(receivePacket, verbose, replyPort).start();
+			//			len = receivePacket.getLength();
+			//			sendPacket = new DatagramPacket(data, len, replyAddress, replyPort); //new packet to send back to client
+			//			try {
+			//				replySocket = new DatagramSocket(); //create a new socket to reply to client
+			//			} catch (SocketException e1) {
+			//				e1.printStackTrace();
+			//			}
+			//			try {
+			//				replySocket.send(sendPacket); //send the reply on to the client
+			//			} catch (IOException e) {
+			//				e.printStackTrace();
+			//				System.exit(1);
+			//			}
+			//			Message.printOutgoing(sendPacket, "Intermediate Host",verbose);
+			//			replySocket.close(); //close socket once message sent to client
 		}
 	}
 

@@ -22,7 +22,7 @@ public class Server extends Stoppable{
 	{
 		try {
 			//make socket to receive requests on port 69
-			receiveSocket = new DatagramSocket(6000);
+			receiveSocket = new DatagramSocket(69);  //CHANGED
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -58,6 +58,7 @@ public class Server extends Stoppable{
 		BufferedInputStream in;
 		try {
 			in = new BufferedInputStream(new FileInputStream (filename));
+			System.out.println(receivePacket.getPort());
 			super.read(in, sendSocket, receivePacket.getPort());
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block

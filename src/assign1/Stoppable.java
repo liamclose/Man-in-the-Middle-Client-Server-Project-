@@ -105,7 +105,7 @@ public class Stoppable extends Thread {
 						}
 					}
 				}
-				Message.printIncoming(receivePacket, "Client",verbose);
+				Message.printIncoming(receivePacket, "Read", verbose);
 				if (!(Message.parseBlock(sendPacket.getData())==Message.parseBlock(message))) {
 					System.out.println("ERROR: Acknowledge does not match block sent "+ Message.parseBlock(sendPacket.getData()) + "    "+ Message.parseBlock(message));
 					return;
