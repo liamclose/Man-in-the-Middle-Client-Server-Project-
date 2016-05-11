@@ -35,9 +35,6 @@ public class Stoppable extends Thread {
 						if (!Message.validate(receivePacket)) {
 							System.out.print("Invalid packet.");
 							Message.printIncoming(receivePacket, "ERROR", true);
-							for (int i =0; i<516;i++) {
-								System.out.println(receivePacket.getData()[i]);
-							}
 							System.exit(0);
 						}
 					} catch (SocketTimeoutException e) {
@@ -70,10 +67,13 @@ public class Stoppable extends Thread {
 		byte[] data = new byte[512];
 		byte[] resp = new byte[4];
 		try {
+			boolean empty = true;
+			sendPacket = new DatagramPacket(resp,4);
 			while (((n = in.read(data)) != -1)) {
 				if ((int) block2 ==-1)
 					block1++;
 				block2++;
+				empty = false;
 				byte[] message = new byte[n+4];
 				message[0] = 0;
 				message[1] = 3;
@@ -94,7 +94,7 @@ public class Stoppable extends Thread {
 						sendReceiveSocket.setSoTimeout(300);
 						sendReceiveSocket.receive(receivePacket);
 						if (!Message.validate(receivePacket)) {
-							//System.out.print("Invalid packet.");
+							System.out.print("Invalid packet.");
 							Message.printIncoming(receivePacket, "ERROR", true);
 							System.exit(0);
 						}
@@ -112,7 +112,8 @@ public class Stoppable extends Thread {
 				}
 
 			}
-			if (n==-1&&sendPacket.getLength()==516) {
+			System.out.println("" + n + sendPacket.getLength());
+			if ((n==-1&&sendPacket.getLength()==516)||empty) {
 				if ((int) block2 ==-1)
 					block1++;
 				block2++;
@@ -123,7 +124,8 @@ public class Stoppable extends Thread {
 				sendPacket = new DatagramPacket(resp,4,InetAddress.getLocalHost(),port);
 				sendReceiveSocket.send(sendPacket);
 				Message.printOutgoing(sendPacket, "Read", verbose);
-				
+				sendReceiveSocket.receive(sendPacket);
+				Message.printIncoming(sendPacket, "Read", verbose);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

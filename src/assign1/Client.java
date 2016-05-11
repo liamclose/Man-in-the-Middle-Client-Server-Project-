@@ -77,7 +77,6 @@ public class Client extends Stoppable{
 					in.close();
 
 				} catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				catch (IOException e) {
@@ -141,6 +140,7 @@ public class Client extends Stoppable{
 				if (x.contains("y")||x.contains("Y")) {
 					c.serverPort = 23;
 				}
+				System.out.println("(R)ead or (w)rite?");
 
 			}
 			else {

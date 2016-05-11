@@ -1,11 +1,7 @@
 package assign1;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.net.*;
 
 public class Intermediate extends Stoppable{
 	DatagramPacket sendPacket, receivePacket;
@@ -17,8 +13,6 @@ public class Intermediate extends Stoppable{
 	public Intermediate() {	
 		try {
 			//create the two sockets which always exist, one on port 23 to receive requests from the client
-			//and one on a random port to communicate with the server
-			serverSideSocket = new DatagramSocket();
 			receiveSocket = new DatagramSocket(23);
 		} catch (SocketException se) {
 			se.printStackTrace();
@@ -45,31 +39,33 @@ public class Intermediate extends Stoppable{
 
 	public void run() {
 		try {
-			
 			sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),InetAddress.getLocalHost(),69);
 			serverSideSocket.send(sendPacket);
 			while(true){				
 				byte data[] = new byte[516];
 				receivePacket = new DatagramPacket(data, data.length);
-				System.out.println("expected");
+				serverSideSocket.setSoTimeout(60000);
 				serverSideSocket.receive(receivePacket);
 				serverPort = receivePacket.getPort();
 				Message.printIncoming(receivePacket, "Intermediate Host",verbose);
 				sendPacket = new DatagramPacket(receivePacket.getData(),receivePacket.getLength(),InetAddress.getLocalHost(),replyPort); 
 				replySocket.send(sendPacket);
 				Message.printOutgoing(sendPacket, "Intermediate Host",verbose);
+				replySocket.setSoTimeout(60000);
 				replySocket.receive(receivePacket);
 				Message.printIncoming(receivePacket, "Intermediate Host",verbose);
 				sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),InetAddress.getLocalHost(),serverPort);
 				serverSideSocket.send(sendPacket);
 			}
+		} catch (SocketTimeoutException e) {
+			return;
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 			System.exit(1);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		} 
 
 	}
 	/*
@@ -99,37 +95,9 @@ public class Intermediate extends Stoppable{
 				e.printStackTrace();
 				System.exit(1);
 			}
-//			try {
-//				serverSideSocket.send(sendPacket); //send the packet to the server
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//				System.exit(1);
-//			}
-//			Message.printOutgoing(sendPacket, "Intermediate Host",verbose);
-//			try {
-//				serverSideSocket.receive(receivePacket);
-//			}
-//			catch (IOException e) {
-//				e.printStackTrace();
-//				System.exit(1);
-//			}
-//			Message.printIncoming(receivePacket, "Intermediate Host",verbose);
+
 			new Intermediate(receivePacket, verbose, replyPort).start();
-			//			len = receivePacket.getLength();
-			//			sendPacket = new DatagramPacket(data, len, replyAddress, replyPort); //new packet to send back to client
-			//			try {
-			//				replySocket = new DatagramSocket(); //create a new socket to reply to client
-			//			} catch (SocketException e1) {
-			//				e1.printStackTrace();
-			//			}
-			//			try {
-			//				replySocket.send(sendPacket); //send the reply on to the client
-			//			} catch (IOException e) {
-			//				e.printStackTrace();
-			//				System.exit(1);
-			//			}
-			//			Message.printOutgoing(sendPacket, "Intermediate Host",verbose);
-			//			replySocket.close(); //close socket once message sent to client
+
 		}
 	}
 

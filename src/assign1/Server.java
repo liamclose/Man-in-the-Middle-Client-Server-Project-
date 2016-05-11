@@ -72,7 +72,6 @@ public class Server extends Stoppable{
 		filename = "copy".concat(filename);
 		BufferedOutputStream out;
 		try {
-			System.out.println(filename);
 			out = new BufferedOutputStream(new FileOutputStream(filename));
 			sendSocket.send(sendPacket);
 			super.write(out, sendSocket);
