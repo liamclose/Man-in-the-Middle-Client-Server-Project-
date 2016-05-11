@@ -11,10 +11,10 @@ public class Client extends Stoppable{
 
 	int serverPort = 69;
 
-	public static final int READ= 1; //caps
+	public static final int READ= 1; 
 	public static final int WRITE = 2;
 
-	// validation client side?
+	// validation client side
 	public Client()
 	{
 		try {
@@ -84,7 +84,7 @@ public class Client extends Stoppable{
 				}
 			}
 			else if (opcode==READ) {
-				filename = "copy".concat(filename);
+				filename = "copy".concat(filename); //avoid overwriting the existing file
 				try {
 					BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(filename));
 					write(out,sendReceiveSocket);

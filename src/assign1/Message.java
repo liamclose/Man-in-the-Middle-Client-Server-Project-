@@ -1,17 +1,9 @@
 package assign1;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.net.*;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
-
-/*
- *  -Test/normal
- *  -change ports
- */
 
 
 

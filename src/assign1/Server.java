@@ -1,11 +1,5 @@
 package assign1;
 
-//SimpleEchoServer.java
-//This class is the server side of a simple echo server based on
-//UDP/IP. The server receives from a client a packet containing a character
-//string, then echoes the string back to the client.
-//Last edited January 9th, 2016
-
 import java.io.*;
 import java.net.*;
 
@@ -18,11 +12,10 @@ public class Server extends Stoppable{
 	public static final byte[] ackZero = {0, 4, 0, 0};
 	boolean readTransfer;
 
-	public Server()
-	{
+	public Server() {
 		try {
 			//make socket to receive requests on port 69
-			receiveSocket = new DatagramSocket(69);  //CHANGED
+			receiveSocket = new DatagramSocket(69);
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -30,7 +23,10 @@ public class Server extends Stoppable{
 		shutdown = false;
 
 	}
-
+	/*
+	 * This constructer takes a datagrampacket as an argument, in order to save the socket of the client it is
+	 * communicating with. Verbose is used to preserve the verbosity state of the parent.
+	 */
 	public Server(DatagramPacket received,boolean verbose) {
 		this.verbose = verbose;
 		filename = Message.parseFilename(new String(received.getData(),0,received.getLength()));
@@ -54,14 +50,13 @@ public class Server extends Stoppable{
 		}
 	}		
 
-	public void read() { //test this!
+	public void read() { 
 		BufferedInputStream in;
 		try {
 			in = new BufferedInputStream(new FileInputStream (filename));
 			System.out.println(receivePacket.getPort());
 			super.read(in, sendSocket, receivePacket.getPort());
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -69,14 +64,13 @@ public class Server extends Stoppable{
 	}
 
 	public void write() {
-		filename = "copy".concat(filename);
+		filename = "copy".concat(filename); //appends copy because everything's in the same folder on the same computer right now
 		BufferedOutputStream out;
 		try {
 			out = new BufferedOutputStream(new FileOutputStream(filename));
 			sendSocket.send(sendPacket);
 			super.write(out, sendSocket);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -90,7 +84,9 @@ public class Server extends Stoppable{
 		}
 		sendSocket.close();
 	}
-
+	/*
+	 * waits for a new client connection and creates a new thread to deal with it
+	 */
 	public void receiveAndReply()
 	{
 		while (!shutdown) {
@@ -112,11 +108,11 @@ public class Server extends Stoppable{
 			}
 			//if it passes the validation the Datagram is correctly formed, otherwise something went wrong
 			if (Message.validate(receivePacket)) {
-				Message.printIncoming(receivePacket, "Server",verbose); //string not working for print
+				Message.printIncoming(receivePacket, "Server",verbose); 
 				new Server(receivePacket, verbose).start();
 
 			}
-			else if (timeout) {
+			else if (timeout) { //if we get here because of a timeout we don't want to invoke error code
 
 			}
 			else {

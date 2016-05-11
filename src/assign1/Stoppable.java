@@ -15,12 +15,14 @@ public class Stoppable extends Thread {
 		shutdown = true;
 	} //does not work for client rn
 
+	/*
+	 * write takes a file outputstream and a communication socket as arguments
+	 * it waits for data on the socket and writes it to the file
+	 */
 	public void write(BufferedOutputStream out, DatagramSocket sendReceiveSocket) throws IOException {
 		byte[] resp = new byte[4];
 		resp[0] = 0;
 		resp[1] = 4;
-		byte block1 = 0;
-		byte block2 = 0;
 		byte[] data = new byte[516];
 		try {
 			do {
@@ -60,6 +62,11 @@ public class Stoppable extends Thread {
 		}
 	}
 
+	/*
+	 * read takes an input stream, a socket and a port as arguments
+	 * reads data from the file in 512 byte chunks and sends them over the socket to the port
+	 * on localhost
+	 */
 	public void read(BufferedInputStream in, DatagramSocket sendReceiveSocket, int port) throws IOException {
 		int n;
 		byte block1 = 0;

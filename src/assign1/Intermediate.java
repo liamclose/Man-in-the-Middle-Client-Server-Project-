@@ -8,7 +8,6 @@ public class Intermediate extends Stoppable{
 	DatagramSocket serverSideSocket, receiveSocket, replySocket;
 	int replyPort, serverPort;
 	InetAddress replyAddress;
-	private boolean shutdown = false;
 
 	public Intermediate() {	
 		try {
@@ -20,14 +19,14 @@ public class Intermediate extends Stoppable{
 		}
 	}
 
-	public Intermediate(DatagramPacket received,boolean verbose, int port) {
+	public Intermediate(DatagramPacket received,boolean verbose, int clientPort) {
 		this.verbose = verbose;
 		filename = Message.parseFilename(new String(received.getData(),0,received.getLength()));
 		receivePacket = received;
 		try {
 			serverSideSocket = new DatagramSocket();
 			replySocket = new DatagramSocket();
-			replyPort = port; 
+			replyPort = clientPort; 
 			serverPort = received.getPort();
 			replyAddress = received.getAddress();
 			receivePacket = received;
@@ -44,21 +43,21 @@ public class Intermediate extends Stoppable{
 			while(true){				
 				byte data[] = new byte[516];
 				receivePacket = new DatagramPacket(data, data.length);
-				serverSideSocket.setSoTimeout(60000);
+				serverSideSocket.setSoTimeout(60000);//timeout if no data for over a minute
 				serverSideSocket.receive(receivePacket);
 				serverPort = receivePacket.getPort();
 				Message.printIncoming(receivePacket, "Intermediate Host",verbose);
 				sendPacket = new DatagramPacket(receivePacket.getData(),receivePacket.getLength(),InetAddress.getLocalHost(),replyPort); 
 				replySocket.send(sendPacket);
 				Message.printOutgoing(sendPacket, "Intermediate Host",verbose);
-				replySocket.setSoTimeout(60000);
+				replySocket.setSoTimeout(60000); 
 				replySocket.receive(receivePacket);
 				Message.printIncoming(receivePacket, "Intermediate Host",verbose);
 				sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),InetAddress.getLocalHost(),serverPort);
 				serverSideSocket.send(sendPacket);
 			}
 		} catch (SocketTimeoutException e) {
-			return;
+			return; //this thread is done
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -70,7 +69,8 @@ public class Intermediate extends Stoppable{
 	}
 	/*
 	 * forward takes all messages from the client and forwards them on to the server
-	 * it then waits for a response, which it forwards back to the client
+	 * it also creates a new intermediate host thread with its own serverside port and 
+	 * reply port to continue forwarding messages
 	 */
 	public void forward() {
 		while (!shutdown) { //loop forever-ish
