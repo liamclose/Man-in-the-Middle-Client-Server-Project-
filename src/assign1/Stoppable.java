@@ -23,6 +23,8 @@ public class Stoppable extends Thread {
 		byte[] resp = new byte[4];
 		resp[0] = 0;
 		resp[1] = 4;
+		int expected = 1;
+		int actual;
 		byte[] data = new byte[516];
 		try {
 			do {
@@ -48,11 +50,17 @@ public class Stoppable extends Thread {
 				}				
 				port = receivePacket.getPort();
 				Message.printIncoming(receivePacket, "Write",verbose);
-				out.write(data,4,receivePacket.getLength()-4);
+				actual = Message.parseBlock(data);
+				if (expected==actual) {
+					out.write(data,4,receivePacket.getLength()-4);
+					expected++;
+				}
 				System.arraycopy(receivePacket.getData(), 2, resp, 2, 2);
 				sendPacket = new DatagramPacket(resp, resp.length,
 						receivePacket.getAddress(), receivePacket.getPort());
 				sendReceiveSocket.send(sendPacket);
+				sendReceiveSocket.send(sendPacket);
+				System.out.println("write:  " + expected +"      " + actual);
 				Message.printOutgoing(sendPacket, this.toString(),verbose);
 			} while (receivePacket.getLength()==516);
 			out.close();
@@ -99,7 +107,7 @@ public class Stoppable extends Thread {
 					timeout = false;
 					try {
 						sendReceiveSocket.setSoTimeout(300);
-						sendReceiveSocket.receive(receivePacket);
+						sendReceiveSocket.receive(receivePacket); 
 						if (!Message.validate(receivePacket)) {
 							System.out.print("Invalid packet.");
 							Message.printIncoming(receivePacket, "ERROR", true);
@@ -110,16 +118,21 @@ public class Stoppable extends Thread {
 						if (shutdown) {
 							System.exit(0);
 						}
+						else {
+							System.out.println("timeout: " + Message.parseBlock(sendPacket.getData()));
+							sendReceiveSocket.send(sendPacket);
+						}
 					}
 				}
-				Message.printIncoming(receivePacket, "Read", verbose);
-				if (!(Message.parseBlock(sendPacket.getData())==Message.parseBlock(message))) {
-					System.out.println("ERROR: Acknowledge does not match block sent "+ Message.parseBlock(sendPacket.getData()) + "    "+ Message.parseBlock(message));
-					return;
+				System.out.println("read:  " + Message.parseBlock(sendPacket.getData()) +"      " + Message.parseBlock(receivePacket.getData()));
+				//Message.printIncoming(receivePacket, "Read", verbose);
+				while (Message.parseBlock(sendPacket.getData())!=Message.parseBlock(message)) {
+					
+					sendReceiveSocket.receive(receivePacket);
+					System.out.println("while: " +  Message.parseBlock(receivePacket.getData()));
 				}
 
 			}
-			System.out.println("" + n + sendPacket.getLength());
 			if ((n==-1&&sendPacket.getLength()==516)||empty) {
 				if ((int) block2 ==-1)
 					block1++;

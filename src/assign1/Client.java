@@ -101,6 +101,7 @@ public class Client extends Stoppable{
 
 	public static void main(String args[])
 	{
+		
 		Client c = new Client();
 		String x;
 		Scanner sc = new Scanner(System.in);
@@ -148,5 +149,6 @@ public class Client extends Stoppable{
 			}
 		}
 		sc.close();
+		
 	}
 }

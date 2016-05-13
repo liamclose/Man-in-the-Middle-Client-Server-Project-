@@ -54,7 +54,6 @@ public class Server extends Stoppable{
 		BufferedInputStream in;
 		try {
 			in = new BufferedInputStream(new FileInputStream (filename));
-			System.out.println(receivePacket.getPort());
 			super.read(in, sendSocket, receivePacket.getPort());
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -90,6 +89,7 @@ public class Server extends Stoppable{
 	public void receiveAndReply()
 	{
 		while (!shutdown) {
+			//System.out.println(activeCount());
 			timeout = false;
 			byte data[] = new byte[516];
 			receivePacket = new DatagramPacket(data, data.length);
@@ -97,6 +97,7 @@ public class Server extends Stoppable{
 			try {
 				receiveSocket.setSoTimeout(300); //timeout for quit purposes
 				receiveSocket.receive(receivePacket);
+				Message.printIncoming(receivePacket, "but why", true);
 			} catch (SocketTimeoutException e) {
 				timeout = true;
 			}
