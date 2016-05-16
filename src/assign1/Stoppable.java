@@ -14,25 +14,28 @@ public class Stoppable extends Thread {
 	public void setShutdown() {
 		shutdown = true;
 	} 
-	
+
 	/* TODO
-	* 	-check port and host on packet
-	* 		-error if unexpected
-	* 	-timeout/retransmit
-	* 	-timing diagram
-	* 	-update class diagram
-	* 	-fix ucm
-	* 	-cleanup intermediate
-	* 	-triplicate acks????
-	* 	-remove extra print statements
-	* 	-package name
-	* 	-ports changed back
-	* 	-fix the client menu?
-	* 	-indicate when verbosity changes
-	* 	-class descriptions in readme
-	* 	-locations of files (specify vs default) etc et c e t   c 
-	* 		-i mean it kind of works, but.....
-	*/
+	 * 	-print ack0
+	 * 	-check port and host on packet
+	 * 		-error if unexpected
+	 * 	-timeout/retransmit
+	 * 	-timing diagram
+	 * 	-update class diagram
+	 * 	-fix ucm
+	 * 	-cleanup intermediate
+	 * 	-triplicate acks????
+	 * 	-remove extra print statements
+	 * 	-package name
+	 * 	-ports changed back
+	 * 	-fix the client menu?
+	 * 	-indicate when verbosity changes
+	 * 	-class descriptions in readme
+	 * 	-locations of files (specify vs default) etc et c e t   c 
+	 * 		-i mean it kind of works, but.....
+	 * 	-ALSO, i forget
+	 * 
+	 */
 
 	/*
 	 * write takes a file outputstream and a communication socket as arguments

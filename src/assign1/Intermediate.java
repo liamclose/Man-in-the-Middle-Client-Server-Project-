@@ -18,7 +18,7 @@ public class Intermediate extends Stoppable{
 	public Intermediate() {	
 		try {
 			//create the two sockets which always exist, one on port 23 to receive requests from the client
-			receiveSocket = new DatagramSocket(6000);
+			receiveSocket = new DatagramSocket(23);
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -47,7 +47,7 @@ public class Intermediate extends Stoppable{
 		try {
 			byte tempData[] = new byte[516];
 			tempData = receivePacket.getData();						
-			sendPacket = new DatagramPacket(tempData, receivePacket.getLength(),InetAddress.getLocalHost(),6001);
+			sendPacket = new DatagramPacket(tempData, receivePacket.getLength(),InetAddress.getLocalHost(),69);
 			boolean specialRequest = false;
 
 			System.out.println("in run");

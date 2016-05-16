@@ -38,10 +38,7 @@ To test the program you can run to read or write with all defferent size of file
 	3. exact.txt is a file with exactly 512 bytes
 	4. empty.txt is an empty file.
 	
-Once you run with a certain file you can compare the file you ran with ex. "sample.txt" with the file 
-that has been created ex. "copysample.txt".
-
-
+Once you run with a certain file you can find the copied file in server/FILENAME
 
 
 RESPONSIBILITY BREAKDOWN

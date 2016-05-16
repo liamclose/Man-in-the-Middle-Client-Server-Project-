@@ -93,18 +93,18 @@ public class Message extends Thread{
 			System.out.println(name + ": packet received.");
 			//System.out.println("From host: " + p.getAddress());
 			System.out.println("Host port: " + p.getPort());
-			int len = p.getLength();
-			System.out.println("Length: " + len);
+			//int len = p.getLength();
+			//System.out.println("Length: " + len);
 			System.out.println("Packet type: "+ ops[opcode]);
 			if (opcode<3) {
-				System.out.println("Filename: "+ parseFilename(new String (p.getData(), 0, len)));
+			//	System.out.println("Filename: "+ parseFilename(new String (p.getData(), 0, len)));
 			}
 			else {
 				System.out.println("Block number " + parseBlock(p.getData()));
 
 			}
 			if (opcode==3) {
-				System.out.println("Number of bytes: "+ (len-4));
+				//System.out.println("Number of bytes: "+ (len-4));
 			}
 			System.out.println();
 		}
@@ -117,11 +117,11 @@ public class Message extends Thread{
 			System.out.println(name + ": packet sent.");
 			//System.out.println("To host: " + p.getAddress());
 			System.out.println("Host port: " + p.getPort());
-			int len = p.getLength();
-			System.out.println("Length: " + len);
+			//int len = p.getLength();
+			//System.out.println("Length: " + len);
 			System.out.println("Packet type: "+ ops[opcode]);
 			if (opcode<3) {
-				System.out.println("Filename: "+ parseFilename(new String (p.getData(), 0, len)));
+				//System.out.println("Filename: "+ parseFilename(new String (p.getData(), 0, len)));
 			}
 			else {
 				System.out.println("Block number " + parseBlock(p.getData()));

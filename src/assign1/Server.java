@@ -15,7 +15,7 @@ public class Server extends Stoppable{
 	public Server() {
 		try {
 			//make socket to receive requests on port 69
-			receiveSocket = new DatagramSocket(6001);
+			receiveSocket = new DatagramSocket(69);
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -53,7 +53,7 @@ public class Server extends Stoppable{
 	public void read() { 
 		BufferedInputStream in;
 		try {
-			in = new BufferedInputStream(new FileInputStream (filename));
+			in = new BufferedInputStream(new FileInputStream ("server/".concat(filename)));
 			super.read(in, sendSocket, receivePacket.getPort());
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -63,7 +63,7 @@ public class Server extends Stoppable{
 	}
 
 	public void write() {
-		filename = filename.concat("test"); //appends copy because everything's in the same folder on the same computer right now
+		filename = "server/".concat(filename); //appends copy because everything's in the same folder on the same computer right now
 		BufferedOutputStream out;
 		try {
 			out = new BufferedOutputStream(new FileOutputStream(filename));

@@ -9,7 +9,7 @@ public class Client extends Stoppable{
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendReceiveSocket;
 
-	int serverPort = 6001;
+	int serverPort = 69;
 
 	public static final int READ= 1; 
 	public static final int WRITE = 2;
