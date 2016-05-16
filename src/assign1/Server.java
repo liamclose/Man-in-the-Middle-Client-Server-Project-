@@ -63,7 +63,7 @@ public class Server extends Stoppable{
 	}
 
 	public void write() {
-		filename = "copy".concat(filename); //appends copy because everything's in the same folder on the same computer right now
+		filename = filename.concat("test"); //appends copy because everything's in the same folder on the same computer right now
 		BufferedOutputStream out;
 		try {
 			out = new BufferedOutputStream(new FileOutputStream(filename));
