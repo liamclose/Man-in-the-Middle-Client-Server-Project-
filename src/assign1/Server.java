@@ -2,7 +2,7 @@ package assign1;
 
 import java.io.*;
 import java.net.*;
-
+//ack 0 not printed
 public class Server extends Stoppable{
 
 	DatagramPacket sendPacket, receivePacket;
@@ -15,7 +15,7 @@ public class Server extends Stoppable{
 	public Server() {
 		try {
 			//make socket to receive requests on port 69
-			receiveSocket = new DatagramSocket(69);
+			receiveSocket = new DatagramSocket(6001);
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -97,7 +97,6 @@ public class Server extends Stoppable{
 			try {
 				receiveSocket.setSoTimeout(300); //timeout for quit purposes
 				receiveSocket.receive(receivePacket);
-				Message.printIncoming(receivePacket, "but why", true);
 			} catch (SocketTimeoutException e) {
 				timeout = true;
 			}

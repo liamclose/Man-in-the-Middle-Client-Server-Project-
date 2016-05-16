@@ -20,6 +20,7 @@ public class Stoppable extends Thread {
 	 * it waits for data on the socket and writes it to the file
 	 */
 	public void write(BufferedOutputStream out, DatagramSocket sendReceiveSocket) throws IOException {
+		//write working well for client with duplicates
 		byte[] resp = new byte[4];
 		resp[0] = 0;
 		resp[1] = 4;
@@ -32,10 +33,10 @@ public class Stoppable extends Thread {
 				receivePacket = new DatagramPacket(data,516);
 				//validate and save after we get it
 				while (timeout) {
-					timeout = false;
 					try {
 						sendReceiveSocket.setSoTimeout(300);
 						sendReceiveSocket.receive(receivePacket);
+						timeout = false;
 						if (!Message.validate(receivePacket)) {
 							System.out.print("Invalid packet.");
 							Message.printIncoming(receivePacket, "ERROR", true);
@@ -52,6 +53,7 @@ public class Stoppable extends Thread {
 				Message.printIncoming(receivePacket, "Write",verbose);
 				actual = Message.parseBlock(data);
 				if (expected==actual) {
+					System.out.println("Writing to file.");
 					out.write(data,4,receivePacket.getLength()-4);
 					expected++;
 				}
@@ -60,7 +62,7 @@ public class Stoppable extends Thread {
 						receivePacket.getAddress(), receivePacket.getPort());
 				sendReceiveSocket.send(sendPacket);
 				sendReceiveSocket.send(sendPacket);
-				System.out.println("write:  " + expected +"      " + actual);
+				System.out.println("write:  " + (expected-1) +"      " + actual);
 				Message.printOutgoing(sendPacket, this.toString(),verbose);
 			} while (receivePacket.getLength()==516);
 			out.close();
@@ -124,11 +126,18 @@ public class Stoppable extends Thread {
 						}
 					}
 				}
-				System.out.println("read:  " + Message.parseBlock(sendPacket.getData()) +"      " + Message.parseBlock(receivePacket.getData()));
-				//Message.printIncoming(receivePacket, "Read", verbose);
-				while (Message.parseBlock(sendPacket.getData())!=Message.parseBlock(message)) {
-					
-					sendReceiveSocket.receive(receivePacket);
+				System.out.println("read:  sent:" + Message.parseBlock(sendPacket.getData()) +"      received:" + Message.parseBlock(receivePacket.getData()));
+				Message.printIncoming(receivePacket, "Read", verbose);
+				System.out.println(Message.parseBlock(sendPacket.getData())!=Message.parseBlock(receivePacket.getData()));
+				while ((Message.parseBlock(sendPacket.getData())!=Message.parseBlock(receivePacket.getData()))||timeout) {
+					try {
+						sendReceiveSocket.receive(receivePacket);
+						Message.printIncoming(receivePacket,"Final packet",verbose);
+						timeout = false;
+					}
+					catch (SocketTimeoutException e) {
+						timeout = true;
+					}
 					System.out.println("while: " +  Message.parseBlock(receivePacket.getData()));
 				}
 

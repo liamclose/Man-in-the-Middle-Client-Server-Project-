@@ -9,7 +9,7 @@ public class Intermediate extends Stoppable{
 	DatagramSocket serverSideSocket, receiveSocket, replySocket;
 	int replyPort, serverPort;
 	InetAddress replyAddress;
-	
+
 	static String packetType;
 	static int packetNumber;
 	static int time=0;
@@ -18,7 +18,7 @@ public class Intermediate extends Stoppable{
 	public Intermediate() {	
 		try {
 			//create the two sockets which always exist, one on port 23 to receive requests from the client
-			receiveSocket = new DatagramSocket(23);
+			receiveSocket = new DatagramSocket(6000);
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -43,20 +43,21 @@ public class Intermediate extends Stoppable{
 	}	
 
 	public void run() {
+		//super necessary to clean this up, suuuuuper necessary
 		try {
 			byte tempData[] = new byte[516];
 			tempData = receivePacket.getData();						
-			sendPacket = new DatagramPacket(tempData, receivePacket.getLength(),InetAddress.getLocalHost(),69);
+			sendPacket = new DatagramPacket(tempData, receivePacket.getLength(),InetAddress.getLocalHost(),6001);
 			boolean specialRequest = false;
-			
+
 			System.out.println("in run");
-			
+			int x = 0;
 			if(packetType.toUpperCase().equals("RRQ")||packetType.toUpperCase().equals("WRQ"))
 			{				
 				specialRequest = true;
 				System.out.println("setting special");
 			}
-			
+
 			if(errorType.toUpperCase().contains("DELAY") && specialRequest){
 				System.out.println("about to delay");
 				delay();
@@ -64,67 +65,94 @@ public class Intermediate extends Stoppable{
 				specialRequest = false;
 			}			
 			else if(errorType.toUpperCase().contains("DUPLICATE") && specialRequest){
-				duplicate(sendPacket);
+				duplicate(sendPacket,serverSideSocket);
 				specialRequest = false;
 			}
-			
+
 			if(!errorType.toUpperCase().contains("LOSE")){
 				System.out.println("sending");
 				serverSideSocket.send(sendPacket);
+				Message.printOutgoing(sendPacket, "Intermediate Host", verbose);
 			}
 			else{
 				if(!specialRequest){
 					serverSideSocket.send(sendPacket);
 				}
 			}
-			
-			while(true){				
+			int timeoutCount = 0;
+			timeout = false;
+			while(true) { //loop forever
+				if (timeoutCount ==20) {
+					return;
+				}
+				System.out.println("New time through the loop.\n");
 				byte data[] = new byte[516];
 				receivePacket = new DatagramPacket(data, data.length);
-				serverSideSocket.setSoTimeout(60000);//timeout if no data for over a minute
-				serverSideSocket.receive(receivePacket);
-				serverPort = receivePacket.getPort();
-				Message.printIncoming(receivePacket, "Intermediate Host",verbose);								
-				sendPacket = new DatagramPacket(receivePacket.getData(),receivePacket.getLength(),InetAddress.getLocalHost(),replyPort); 
-				if(packetType.equals(getOpCode(receivePacket.getData())) && Message.parseBlock(receivePacket.getData()) == packetNumber){
-					if(errorType.toUpperCase().contains("DELAY")){
-						delay();
-					}
-					else if(errorType.toUpperCase().contains("DUPLICATE")){
-						duplicate(sendPacket);
-					}					
-					if(!errorType.toUpperCase().contains("LOSE")){
-						replySocket.send(sendPacket);
-						Message.printOutgoing(sendPacket, "Intermediate Host",verbose);
-					}					
+				try {
+					serverSideSocket.setSoTimeout(300); 
+					serverSideSocket.receive(receivePacket); //receive from server
+					timeout = false;
+					Message.printIncoming(receivePacket, "Intermediate Host - ServerSide",verbose);
+					sendPacket = new DatagramPacket(receivePacket.getData(),receivePacket.getLength(),InetAddress.getLocalHost(),replyPort); 
+				} catch (SocketTimeoutException e) {
+					timeoutCount++;
+					timeout = true;
 				}
-				else{
-					replySocket.send(sendPacket);
-					Message.printOutgoing(sendPacket, "Intermediate Host",verbose);
+				if (x==0) {
+					serverPort = receivePacket.getPort();
+					x++;
 				}
-				replySocket.setSoTimeout(60000); 
-				replySocket.receive(receivePacket);
-				Message.printIncoming(receivePacket, "Intermediate Host",verbose);				
-				sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),InetAddress.getLocalHost(),serverPort);
-				if(packetType.equals(getOpCode(receivePacket.getData())) && Message.parseBlock(receivePacket.getData()) == packetNumber){
-					if(errorType.toUpperCase().contains("DELAY")){
-						delay();
+				
+				if (!timeout) {
+					if(packetType.equals(getOpCode(receivePacket.getData())) && Message.parseBlock(receivePacket.getData()) == packetNumber){
+						if(errorType.toUpperCase().contains("DELAY")){
+							delay();
+						}
+						else if(errorType.toUpperCase().contains("DUPLICATE")){
+							System.out.println("other duplicate");
+							duplicate(sendPacket, replySocket);
+						}					
+						if(!errorType.toUpperCase().contains("LOSE")){
+							replySocket.send(sendPacket);
+							Message.printOutgoing(sendPacket, "Intermediate Host - ClientSide",verbose);
+						}					
 					}
-					else if(errorType.toUpperCase().contains("DUPLICATE")){
-						duplicate(sendPacket);
-					}					
-					if(!errorType.toUpperCase().contains("LOSE")){
+					else{
+						replySocket.send(sendPacket); //send to client
+						Message.printOutgoing(sendPacket, "Intermediate Host - ClientSide",verbose);
+					}}
+				try {
+					replySocket.setSoTimeout(300); 
+					replySocket.receive(receivePacket); //receive from client
+					timeout = false;
+					Message.printIncoming(receivePacket, "Intermediate Host - ClientSide",verbose);
+					System.out.println(replyPort+"????" + serverPort);
+					sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),InetAddress.getLocalHost(),serverPort);
+				} catch (SocketTimeoutException e) {
+					timeout = true;
+				}
+				
+				if (!timeout) {
+					if(packetType.equals(getOpCode(receivePacket.getData())) && Message.parseBlock(receivePacket.getData()) == packetNumber){
+						if(errorType.toUpperCase().contains("DELAY")){
+							delay();
+						}
+						else if(errorType.toUpperCase().contains("DUPLICATE")){
+							System.out.println("Duplicating.");
+							duplicate(sendPacket, serverSideSocket);
+						}					
+						if(!errorType.toUpperCase().contains("LOSE")){
+							serverSideSocket.send(sendPacket); //send to server
+							Message.printOutgoing(sendPacket, "Intermediate Host - ServerSide",verbose);
+						}					
+					}
+					else{
 						serverSideSocket.send(sendPacket);
-						Message.printOutgoing(sendPacket, "Intermediate Host",verbose);
-					}					
-				}
-				else{
-					serverSideSocket.send(sendPacket);
+						Message.printOutgoing(sendPacket, "Intermediate Host - ServerSide", verbose);
+					}
 				}
 
 			}
-		} catch (SocketTimeoutException e) {
-			return; //this thread is done
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -134,7 +162,7 @@ public class Intermediate extends Stoppable{
 		} 
 
 	}
-	
+
 	private String getOpCode(byte[] code){
 		if(code[0] == 0 && code[1] == 3){
 			return "DATA";
@@ -144,31 +172,38 @@ public class Intermediate extends Stoppable{
 		}		
 		return "";
 	}
-	
+
 	private void delay()
 	{
 		try {
-	          Thread.sleep(time);
-	      } catch (InterruptedException e ) {
-	          e.printStackTrace();
-	          System.exit(1);
-	      }
+			Thread.sleep(time);
+		} catch (InterruptedException e ) {
+			e.printStackTrace();
+			System.exit(1);
+		}
 	}
-	
-	private void duplicate(DatagramPacket send) throws IOException{
-		serverSideSocket.send(send);
+
+	private void duplicate(DatagramPacket send, DatagramSocket sender){
 		try {
-	          Thread.sleep(time);
-	      } catch (InterruptedException e ) {
-	          e.printStackTrace();
-	          System.exit(1);
-	      }
+			sender.send(send);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		Message.printOutgoing(send,"Duplicated",verbose);
+		try {
+			Thread.sleep(time);
+		} catch (InterruptedException e ) {
+			e.printStackTrace();
+			System.exit(1);
+		}
 	}
-	
-	
-	
-	
-	
+
+
+
+
+
 	/*
 	 * forward takes all messages from the client and forwards them on to the server
 	 * it also creates a new intermediate host thread with its own serverside port and 
@@ -185,10 +220,10 @@ public class Intermediate extends Stoppable{
 				e.printStackTrace();
 				System.exit(1);
 			}
-
+			System.out.println("Initial");
 			Message.printIncoming(receivePacket, "Intermediate Host",verbose);
 			replyPort = receivePacket.getPort();	
-			
+
 			new Intermediate(receivePacket, verbose, replyPort).start();
 
 		}
@@ -198,7 +233,7 @@ public class Intermediate extends Stoppable{
 		Intermediate i = new Intermediate();		
 		String x;				
 		Scanner sc = new Scanner(System.in);
-		
+
 		System.out.println("What error would you like to simulate? \n (de)layed packet, (l)ost packet, (du)plicated, or (n)one?");
 		if(sc.hasNext()) {
 			x = sc.next();
