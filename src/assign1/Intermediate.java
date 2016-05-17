@@ -10,8 +10,8 @@ public class Intermediate extends Stoppable{
 	int replyPort, serverPort;
 	InetAddress replyAddress;
 
-	static String packetType;
-	static int packetNumber;
+	static String packetType = "";
+	static int packetNumber = 0;
 	static int time=0;
 	static String errorType = "";
 
@@ -44,6 +44,7 @@ public class Intermediate extends Stoppable{
 
 	public void run() {
 		//super necessary to clean this up, suuuuuper necessary
+		//server side printing on receive
 		try {
 			byte tempData[] = new byte[516];
 			tempData = receivePacket.getData();						
@@ -78,18 +79,22 @@ public class Intermediate extends Stoppable{
 				if(!specialRequest){
 					serverSideSocket.send(sendPacket);
 				}
+				else {
+					System.out.println("Lost initial request.");
+					errorType = "";
+				}
 			}
 			int timeoutCount = 0;
 			timeout = false;
 			while(true) { //loop forever
-				if (timeoutCount ==20) {
+				if (timeoutCount ==5) {
 					return;
 				}
 				System.out.println("New time through the loop.\n");
 				byte data[] = new byte[516];
 				receivePacket = new DatagramPacket(data, data.length);
 				try {
-					serverSideSocket.setSoTimeout(300); 
+					serverSideSocket.setSoTimeout(600); 
 					serverSideSocket.receive(receivePacket); //receive from server
 					timeout = false;
 					Message.printIncoming(receivePacket, "Intermediate Host - ServerSide",verbose);
@@ -109,24 +114,27 @@ public class Intermediate extends Stoppable{
 							delay();
 						}
 						else if(errorType.toUpperCase().contains("DUPLICATE")){
-							System.out.println("other duplicate");
 							duplicate(sendPacket, replySocket);
 						}					
 						if(!errorType.toUpperCase().contains("LOSE")){
 							replySocket.send(sendPacket);
 							Message.printOutgoing(sendPacket, "Intermediate Host - ClientSide",verbose);
-						}					
+						}
+						else {
+							System.out.println("Lost packet going to client.");
+							errorType = "";
+						}
 					}
 					else{
 						replySocket.send(sendPacket); //send to client
 						Message.printOutgoing(sendPacket, "Intermediate Host - ClientSide",verbose);
-					}}
+					}
+					}
 				try {
-					replySocket.setSoTimeout(300); 
+					replySocket.setSoTimeout(600); 
 					replySocket.receive(receivePacket); //receive from client
 					timeout = false;
 					Message.printIncoming(receivePacket, "Intermediate Host - ClientSide",verbose);
-					System.out.println(replyPort+"????" + serverPort);
 					sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),InetAddress.getLocalHost(),serverPort);
 				} catch (SocketTimeoutException e) {
 					timeout = true;
@@ -144,7 +152,11 @@ public class Intermediate extends Stoppable{
 						if(!errorType.toUpperCase().contains("LOSE")){
 							serverSideSocket.send(sendPacket); //send to server
 							Message.printOutgoing(sendPacket, "Intermediate Host - ServerSide",verbose);
-						}					
+						}
+						else {
+							errorType = "";
+							System.out.println("Lost packet going to server");
+						}
 					}
 					else{
 						serverSideSocket.send(sendPacket);
@@ -173,8 +185,9 @@ public class Intermediate extends Stoppable{
 		return "";
 	}
 
-	private void delay()
+	private void delay() //new thread to delay?
 	{
+		errorType = "";
 		try {
 			Thread.sleep(time);
 		} catch (InterruptedException e ) {
@@ -184,6 +197,7 @@ public class Intermediate extends Stoppable{
 	}
 
 	private void duplicate(DatagramPacket send, DatagramSocket sender){
+		errorType = "";
 		try {
 			sender.send(send);
 
@@ -191,7 +205,7 @@ public class Intermediate extends Stoppable{
 			e.printStackTrace();
 			System.exit(1);
 		}
-		Message.printOutgoing(send,"Duplicated",verbose);
+		Message.printOutgoing(send,"First Duplicate",verbose);
 		try {
 			Thread.sleep(time);
 		} catch (InterruptedException e ) {
@@ -233,7 +247,7 @@ public class Intermediate extends Stoppable{
 		Intermediate i = new Intermediate();		
 		String x;				
 		Scanner sc = new Scanner(System.in);
-
+		//make this loop ideally
 		System.out.println("What error would you like to simulate? \n (de)layed packet, (l)ost packet, (du)plicated, or (n)one?");
 		if(sc.hasNext()) {
 			x = sc.next();

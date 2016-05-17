@@ -9,9 +9,9 @@ public class Client extends Stoppable{
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendReceiveSocket;
 
-	int serverPort = 69;
+	int serverPort = 23;
 
-	public static final int READ= 1; 
+	public static final int READ = 1; 
 	public static final int WRITE = 2;
 
 	// validation client side
@@ -36,42 +36,50 @@ public class Client extends Stoppable{
 		String format = "ocTeT";
 		byte msg[] = Message.formatRequest(filename, format, opcode);
 		try {
-			sendPacket = new DatagramPacket(msg, msg.length,
+			super.sendPacket = new DatagramPacket(msg, msg.length,
 					InetAddress.getLocalHost(), serverPort); //SERVERPORT TO SUBMIT  CHANGED
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		Message.printOutgoing(sendPacket, "Client",verbose);
+		Message.printOutgoing(super.sendPacket, "Client",verbose);
 
 		// Send the datagram packet to the server via the send/receive socket. 
-		try {
-			sendReceiveSocket.send(sendPacket);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
+		
+		int timeoutCounter = 0;
 		byte data[] = new byte[516];
-		receivePacket = new DatagramPacket(data, data.length);
+		super.receivePacket = new DatagramPacket(data, data.length);
 		if (!shutdown) {
 			// Process the received datagram.
 			if (opcode==WRITE) {
 				try {
 					byte[] resp = new byte[4];
-					receivePacket = new DatagramPacket(resp,4);
+					super.receivePacket = new DatagramPacket(resp,4);
 					while (timeout) {
+						try {
+							sendReceiveSocket.send(super.sendPacket);
+						} catch (IOException e) {
+							e.printStackTrace();
+							System.exit(1);
+						}
+						System.out.println("ye, sent again");
 						timeout = false;
 						try {
-							sendReceiveSocket.setSoTimeout(300);
-							sendReceiveSocket.receive(receivePacket);
+							sendReceiveSocket.setSoTimeout(1500);
+							sendReceiveSocket.receive(super.receivePacket);
+							Message.printIncoming(super.receivePacket, "Client", verbose);
 						} catch (SocketTimeoutException e) {
+							
+							timeoutCounter++;
 							timeout = true;
-							if (shutdown) {
+							if (shutdown||timeoutCounter==5) {
 								System.exit(0);
 							}
+							System.out.println("Timed out, retransmitting.  "+timeoutCounter);
+							Message.printOutgoing(super.sendPacket,"Retransmit:",verbose);
 						}
 					}
-					port = receivePacket.getPort();
+					port = super.receivePacket.getPort();
 					BufferedInputStream in = new BufferedInputStream(new FileInputStream(filename));
 					read(in,sendReceiveSocket,port);
 					in.close();
@@ -84,12 +92,17 @@ public class Client extends Stoppable{
 				}
 			}
 			else if (opcode==READ) {
-				filename = "copy".concat(filename); //avoid overwriting the existing file
 				try {
+					sendReceiveSocket.send(super.sendPacket);
+				} catch (IOException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
+				try {
+					System.out.println("Creating file output.");
 					BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(filename));
 					write(out,sendReceiveSocket);
 					out.close();
-
 				}
 				catch (IOException e) {
 					e.printStackTrace();

@@ -4,8 +4,7 @@ import java.io.*;
 import java.net.*;
 //ack 0 not printed
 public class Server extends Stoppable{
-
-	DatagramPacket sendPacket, receivePacket;
+	
 	DatagramSocket sendSocket, receiveSocket;
 
 	public static final byte[] dataOne = {0, 3, 0, 1};
@@ -95,7 +94,7 @@ public class Server extends Stoppable{
 			receivePacket = new DatagramPacket(data, data.length);
 			// Block until a datagram packet is received from receiveSocket.
 			try {
-				receiveSocket.setSoTimeout(300); //timeout for quit purposes
+				receiveSocket.setSoTimeout(600); //timeout for quit purposes
 				receiveSocket.receive(receivePacket);
 			} catch (SocketTimeoutException e) {
 				timeout = true;
