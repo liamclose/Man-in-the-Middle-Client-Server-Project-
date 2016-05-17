@@ -1,4 +1,4 @@
-package assign1;
+package tftp;
 
 import java.io.*;
 import java.net.*;
