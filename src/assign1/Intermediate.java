@@ -60,13 +60,13 @@ public class Intermediate extends Stoppable{
 			}
 
 			if(errorType.toUpperCase().contains("DELAY") && specialRequest){
-				System.out.println("about to delay");
+				System.out.println("about to delay" +  System.currentTimeMillis());
 				delay();
-				System.out.println("delayed");
+				System.out.println("delayed" + System.currentTimeMillis());
 				specialRequest = false;
 			}			
 			else if(errorType.toUpperCase().contains("DUPLICATE") && specialRequest){
-				duplicate(sendPacket,serverSideSocket);
+				new Intermediate(receivePacket, verbose, replyPort).start();
 				specialRequest = false;
 			}
 
@@ -111,7 +111,9 @@ public class Intermediate extends Stoppable{
 				if (!timeout) {
 					if(packetType.equals(getOpCode(receivePacket.getData())) && Message.parseBlock(receivePacket.getData()) == packetNumber){
 						if(errorType.toUpperCase().contains("DELAY")){
+							System.out.println("delayed" + System.currentTimeMillis());
 							delay();
+							System.out.println("delayed" + System.currentTimeMillis());
 						}
 						else if(errorType.toUpperCase().contains("DUPLICATE")){
 							duplicate(sendPacket, replySocket);
@@ -143,7 +145,10 @@ public class Intermediate extends Stoppable{
 				if (!timeout) {
 					if(packetType.equals(getOpCode(receivePacket.getData())) && Message.parseBlock(receivePacket.getData()) == packetNumber){
 						if(errorType.toUpperCase().contains("DELAY")){
+							System.out.println("delayed" + System.currentTimeMillis());
 							delay();
+							System.out.println("delayed" + System.currentTimeMillis());
+
 						}
 						else if(errorType.toUpperCase().contains("DUPLICATE")){
 							System.out.println("Duplicating.");
@@ -246,8 +251,10 @@ public class Intermediate extends Stoppable{
 	public static void main (String[] args) {
 		Intermediate i = new Intermediate();		
 		String x;				
-		Scanner sc = new Scanner(System.in);
+		
 		//make this loop ideally
+		while(true) {
+			Scanner sc = new Scanner(System.in);
 		System.out.println("What error would you like to simulate? \n (de)layed packet, (l)ost packet, (du)plicated, or (n)one?");
 		if(sc.hasNext()) {
 			x = sc.next();
@@ -348,7 +355,9 @@ public class Intermediate extends Stoppable{
 		}
 		sc.close();		
 		i.forward();
-		i.receiveSocket.close(); //close the sockets, right now this will never happen
-		i.serverSideSocket.close(); //but in iteration1...when there's a way to exit
+		}
+		//i.receiveSocket.close(); //close the sockets, right now this will never happen
+	//	i.serverSideSocket.close(); //but in iteration1...when there's a way to exit
+		
 	}
 }

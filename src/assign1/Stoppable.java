@@ -19,7 +19,7 @@ public class Stoppable extends Thread {
 	 * 	-print ack0
 	 * 	-check port and host on packet
 	 * 		-error if unexpected
-	 * 		-except intermediate complicates things there?
+	 * 		-except intermediate complicates things there? maybe not bc threading
 	 * 	-timeout/retransmit
 	 * 	-timing diagram
 	 * 	-update class diagram
@@ -36,6 +36,24 @@ public class Stoppable extends Thread {
 	 * 	-set name for printing in constructors
 	 */
 
+	
+	/*
+	 *	Situations
+	 *		RRQ
+	 *		Lose!, Delay! (probs also bad on timeout), Dup
+	 *		WRQ
+	 *		Lose!, Delay! (bad on timeout), Dup
+	 * 		Data 1->n-1
+	 * 		Lose, Delay, Dup
+	 *		Data n
+	 *		Lose, Delay, Dup
+	 *		Ack0
+	 *		Lose!, Delay!, Dup
+	 *		Ack 1->n-1
+	 *		Lose!, Delay, Dup
+	 *		Ack n
+	 *		Lose, Delay, Dup
+	 */
 	//Working:
 	//	-Lose WRQ
 	//	-Lose RRQ
@@ -67,15 +85,16 @@ public class Stoppable extends Thread {
 		int expected = 1;
 		int actual;
 		byte[] data = new byte[516];
+		timeout = true;
 		try {
 			do {
-				timeout = true;
+				
 				receivePacket = new DatagramPacket(data,516);
 				//validate and save after we get it
 				while (timeout) {
 					try {
 						System.out.println("so fast tho");
-						sendReceiveSocket.setSoTimeout(6000); //this timeout kinda breaks things
+						sendReceiveSocket.setSoTimeout(6000); //this timeout kinda breaks things, ack0
 						//should probably extract the initial ack
 						sendReceiveSocket.receive(receivePacket);
 						System.out.println("we have the goods");
@@ -100,6 +119,7 @@ public class Stoppable extends Thread {
 
 				if ((port!=0)&&(receivePacket.getPort()!=port)) {
 					System.out.println("ERROR, WRONG PORT");
+					Message.printIncoming(receivePacket, "ERROR", verbose);
 					System.exit(2);
 				}
 				port = receivePacket.getPort();
@@ -114,14 +134,19 @@ public class Stoppable extends Thread {
 				sendPacket = new DatagramPacket(resp, resp.length,
 						receivePacket.getAddress(), receivePacket.getPort());
 				sendReceiveSocket.send(sendPacket);
-				System.out.println("write:  " + (expected-1) +"      " + actual);
+				System.out.println("write:  " + (expected-1) +"      " + actual + "           " + receivePacket.getLength());
+				
 				Message.printOutgoing(sendPacket, this.toString(),verbose);
+				if (receivePacket.getLength()==516) {
+					timeout = true;
+				}
 			} while (receivePacket.getLength()==516);
 			out.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
+		System.out.println("Done.");
 	}
 
 	/*
