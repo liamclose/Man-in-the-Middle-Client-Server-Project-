@@ -17,9 +17,6 @@ public class Stoppable extends Thread {
 
 	/* TODO
 	 * 	-print ack0
-	 * 	-check port and host on packet
-	 * 		-error if unexpected
-	 * 		-except intermediate complicates things there? maybe not bc threading
 	 * 	-timeout/retransmit
 	 * 	-timing diagram
 	 * 	-update class diagram
@@ -34,25 +31,26 @@ public class Stoppable extends Thread {
 	 * 		-i mean it kind of works, but.....
 	 * 	-ALSO, i forget
 	 * 	-set name for printing in constructors
+	 * 	-quit on too many timeouts
 	 */
 
-	
+
 	/*
 	 *	Situations
 	 *		RRQ
-	 *		Lose!, Delay! (probs also bad on timeout), Dup
+	 *		Lose!, Delay! (probs also bad on timeout), Dup!
 	 *		WRQ
-	 *		Lose!, Delay! (bad on timeout), Dup
+	 *		Lose!, Delay! (bad on timeout), Dup! (file size 0 has probs)
 	 * 		Data 1->n-1
-	 * 		Lose, Delay, Dup
+	 * 		Lose!, Delay, Dup!
 	 *		Data n
-	 *		Lose, Delay, Dup
+	 *		Lose!, Delay, Dup!
 	 *		Ack0
-	 *		Lose!, Delay!, Dup
+	 *		Lose! (except for quit timeout), Delay!, Dup!
 	 *		Ack 1->n-1
-	 *		Lose!, Delay, Dup
+	 *		Lose!, Delay, Dup!
 	 *		Ack n
-	 *		Lose, Delay, Dup
+	 *		Lose!, Delay, Dup!
 	 */
 	//Working:
 	//	-Lose WRQ
@@ -61,7 +59,7 @@ public class Stoppable extends Thread {
 	//	-Delay D on R
 	//	-Normal Read
 	//	-Normal Write (maybe duplicate ack?)
-	
+
 	//Not working:
 	//	-Lose D1 acts like duplicate RRQ/WRQ
 	//	-Losing last A
@@ -88,16 +86,12 @@ public class Stoppable extends Thread {
 		timeout = true;
 		try {
 			do {
-				
+
 				receivePacket = new DatagramPacket(data,516);
-				//validate and save after we get it
 				while (timeout) {
 					try {
-						System.out.println("so fast tho");
-						sendReceiveSocket.setSoTimeout(6000); //this timeout kinda breaks things, ack0
-						//should probably extract the initial ack
+						sendReceiveSocket.setSoTimeout(1500);
 						sendReceiveSocket.receive(receivePacket);
-						System.out.println("we have the goods");
 						timeout = false;
 						timeoutCounter = 0;
 						if (!Message.validate(receivePacket)) {
@@ -109,10 +103,11 @@ public class Stoppable extends Thread {
 						timeout = true;
 						timeoutCounter++;
 						System.out.println("Timed out.");
-						sendReceiveSocket.send(sendPacket);
-						if (shutdown) { //interrupt?
+
+						if (shutdown||timeoutCounter==10) { //interrupt?
 							return;
 						}
+						sendReceiveSocket.send(sendPacket);
 					}
 				}				
 				System.out.println(timeoutCounter);
@@ -135,7 +130,7 @@ public class Stoppable extends Thread {
 						receivePacket.getAddress(), receivePacket.getPort());
 				sendReceiveSocket.send(sendPacket);
 				System.out.println("write:  " + (expected-1) +"      " + actual + "           " + receivePacket.getLength());
-				
+
 				Message.printOutgoing(sendPacket, this.toString(),verbose);
 				if (receivePacket.getLength()==516) {
 					timeout = true;
@@ -187,13 +182,12 @@ public class Stoppable extends Thread {
 					receivePacket = new DatagramPacket(resp,4);
 					//retransmit here???
 					timeout = false;
-
-					
+					timeoutCounter = 0;
 					try {
 						sendReceiveSocket.setSoTimeout(1500);
 						sendReceiveSocket.receive(receivePacket);
 						Message.printIncoming(receivePacket,"Read",verbose);
-						timeoutCounter = 0;
+
 						if (receivePacket.getPort()!=port) {
 							System.out.println("ERROR, WRONG PORT");
 							System.exit(2);
@@ -206,22 +200,16 @@ public class Stoppable extends Thread {
 					} catch (SocketTimeoutException e) {
 						timeout = true;
 						timeoutCounter++;
-						if (shutdown) {
+						if (shutdown||timeoutCounter==10) {
 							System.exit(0);
 						}
 						else {
-							System.out.println("timeout: " + Message.parseBlock(sendPacket.getData()));
-							if (receivePacket.getLength()>4) {
-								Message.printIncoming(receivePacket, "But why", true);
-							}
+							System.out.println("Timed out. Retransmitting block: " + Message.parseBlock(sendPacket.getData()));
 							sendReceiveSocket.send(sendPacket);
-						} //issue with not ending?
+						} 
 					}
 				}
-				System.out.println("read:  sent:" + Message.parseBlock(sendPacket.getData()) +"      received:" + Message.parseBlock(receivePacket.getData()));
-				Message.printIncoming(receivePacket, "Read", verbose);
-				System.out.println(Message.parseBlock(sendPacket.getData())!=Message.parseBlock(receivePacket.getData()));
-				while ((Message.parseBlock(sendPacket.getData())!=Message.parseBlock(receivePacket.getData()))||timeout) {
+				while ((Message.parseBlock(sendPacket.getData())!=Message.parseBlock(receivePacket.getData()))||timeout) { //fuck? no retransmit here?
 					try {
 						sendReceiveSocket.receive(receivePacket);
 						Message.printIncoming(receivePacket,"Final packet",verbose);
@@ -229,8 +217,8 @@ public class Stoppable extends Thread {
 					}
 					catch (SocketTimeoutException e) {
 						timeout = true;
+						System.out.println("Timing out, no retransmit??????");
 					}
-					System.out.println("had not got the right ack yet: " +  Message.parseBlock(receivePacket.getData()));
 				}
 
 			}
@@ -245,13 +233,17 @@ public class Stoppable extends Thread {
 				sendPacket = new DatagramPacket(resp,4,InetAddress.getLocalHost(),port);
 				sendReceiveSocket.send(sendPacket);
 				Message.printOutgoing(sendPacket, "Read", verbose);
-				try {
-					sendReceiveSocket.receive(sendPacket);
-				} catch (SocketTimeoutException e) {
-					System.out.println(":/");
-					System.exit(2);
+				System.out.println("" + Message.parseBlock(sendPacket.getData()));
+				while ((Message.parseBlock(sendPacket.getData())!=Message.parseBlock(receivePacket.getData()))||timeout) {
+					try {
+						sendReceiveSocket.receive(receivePacket);
+						Message.printIncoming(receivePacket, "Read123", verbose);
+						timeout = false;
+					} catch (SocketTimeoutException e) {
+						System.out.println(":/");
+						timeout = true;
+					}
 				}
-				Message.printIncoming(sendPacket, "Read123", verbose);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
