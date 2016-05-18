@@ -26,6 +26,12 @@ public class Message extends Thread{
 					return;
 				}
 				else if (x.contains("v")||x.contains("V")) {
+					if (s.verbose) {
+						System.out.println("Verbose mode turned off.");
+					}
+					else {
+						System.out.println("Verbose mode turned on.");
+					}
 					s.verbose = !s.verbose;
 				}
 				else {

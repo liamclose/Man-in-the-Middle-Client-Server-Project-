@@ -56,7 +56,7 @@ public class Intermediate extends Stoppable{
 				if (timeoutCount ==5) {
 					return;
 				}
-				System.out.println("New time through the loop.\n");
+				System.out.println("New time through the loop.\n"+this+"\n");
 				byte data[] = new byte[516];
 				receivePacket = new DatagramPacket(data, data.length);
 				try {
@@ -74,6 +74,7 @@ public class Intermediate extends Stoppable{
 					x++;
 				}				
 				if (!timeout) {
+					System.out.println(errorType+"      "+receivePacket.getPort()+"       "+timeoutCount+activeCount());
 					errorCheck(replySocket, "Client");				
 					}
 				try {
@@ -240,6 +241,7 @@ public class Intermediate extends Stoppable{
 	 * reply port to continue forwarding messages
 	 */
 	public void forward() {
+		System.out.println(this);
 		while (!shutdown) { //loop forever-ish
 			byte data[] = new byte[516];
 			receivePacket = new DatagramPacket(data, data.length);
@@ -254,7 +256,7 @@ public class Intermediate extends Stoppable{
 			Message.printIncoming(receivePacket, "Intermediate Host",verbose);
 			replyPort = receivePacket.getPort();	
 
-			new Intermediate(receivePacket, false, replyPort).start();
+			new Intermediate(receivePacket, verbose, replyPort).start();
 
 		}
 	}

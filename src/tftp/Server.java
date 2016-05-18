@@ -43,6 +43,7 @@ public class Server extends Stoppable{
 		}
 		try {
 			sendSocket = new DatagramSocket();
+			Message.printOutgoing(sendPacket, "Server", verbose);
 		} catch (SocketException e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -62,7 +63,7 @@ public class Server extends Stoppable{
 	}
 
 	public void write() {
-		filename = "server/".concat(filename); //appends copy because everything's in the same folder on the same computer right now
+		filename = "server/".concat(filename);
 		BufferedOutputStream out;
 		try {
 			out = new BufferedOutputStream(new FileOutputStream(filename));
@@ -101,7 +102,6 @@ public class Server extends Stoppable{
 			}
 			catch (IOException e) {
 				System.out.print("IO Exception: likely:");
-				System.out.println("Receive Socket Timed Out.\n" + e);
 				e.printStackTrace();
 				System.exit(1);
 			}
