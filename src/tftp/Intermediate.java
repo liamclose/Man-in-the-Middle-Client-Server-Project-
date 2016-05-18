@@ -5,8 +5,8 @@ import java.net.*;
 import java.util.Scanner;
 
 public class Intermediate extends Stoppable{
-	DatagramPacket sendPacket, receivePacket;
-	DatagramSocket serverSideSocket, receiveSocket, replySocket;
+	DatagramPacket sendPacket, receivePacket, delayPacket;
+	DatagramSocket serverSideSocket, receiveSocket, replySocket,delaySocket;
 	int replyPort, serverPort;
 	InetAddress replyAddress;
 
@@ -55,6 +55,16 @@ public class Intermediate extends Stoppable{
 			while(true) { //loop forever
 				if (timeoutCount ==5) {
 					return;
+				}
+				if (this.isInterrupted()) {
+					actualDelay();
+					System.out.println("We did the delay    " + System.currentTimeMillis());
+					try {
+						Thread.sleep(1);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 				System.out.println("New time through the loop.\n"+this+"\n");
 				byte data[] = new byte[516];
@@ -111,14 +121,25 @@ public class Intermediate extends Stoppable{
 		return "";
 	}
 
-	private void delay() //new thread to delay?
+	private void delay(DatagramSocket del) //new thread to delay?
 	{
-		errorType = "";
-		try {
+		//errorType = "";
+		delayPacket = sendPacket;
+		delaySocket = del;
+		new Message(time,this).start();
+		/*try {
 			Thread.sleep(time);
 		} catch (InterruptedException e ) {
 			e.printStackTrace();
 			System.exit(1);
+		}*/
+	}
+	private void actualDelay() {
+		try {
+			delaySocket.send(delayPacket);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -151,7 +172,7 @@ public class Intermediate extends Stoppable{
 
 			if(errorType.toUpperCase().contains("DELAY") && specialRequest){
 				System.out.println("about to delay" +  System.currentTimeMillis());
-				delay();
+				delay(serverSideSocket);
 				System.out.println("delayed" + System.currentTimeMillis());
 				specialRequest = false;
 			}			
@@ -161,7 +182,7 @@ public class Intermediate extends Stoppable{
 				new Intermediate(receivePacket, verbose, replyPort).start();
 			}
 
-			if(!errorType.toUpperCase().contains("LOSE")){
+			if(!errorType.toUpperCase().contains("LOSE")&&!errorType.toUpperCase().contains("DELAY")){
 				System.out.println("sending");
 				try {
 					serverSideSocket.send(sendPacket);
@@ -198,7 +219,7 @@ public class Intermediate extends Stoppable{
 		if(packetType.equals(getOpCode(receivePacket.getData())) && Message.parseBlock(receivePacket.getData()) == packetNumber){
 			if(errorType.toUpperCase().contains("DELAY")){
 				System.out.println("delayed" + System.currentTimeMillis());
-				delay();
+				delay(socket);
 				System.out.println("delayed" + System.currentTimeMillis());
 
 			}
@@ -206,8 +227,10 @@ public class Intermediate extends Stoppable{
 				System.out.println("Duplicating.");
 				duplicate(sendPacket, socket);
 			}					
-			if(!errorType.toUpperCase().contains("LOSE")){
+			if((!errorType.toUpperCase().contains("LOSE"))&&!(errorType.toUpperCase().contains("DELAY"))){
+				
 				try {
+					System.out.println("this");
 					socket.send(sendPacket);
 				} catch (IOException e) {
 					// TODO Auto-generated catch block

@@ -10,14 +10,31 @@ import java.util.regex.Pattern;
 public class Message extends Thread{
 	Scanner sc;
 	Stoppable s;
+	int sleep;
+	boolean inter = false;
 	public static final String[] ops = {"","RRQ","WRQ","DATA","ACK"};
 
 	public Message(Stoppable s) {
 		this.s = s;
 		sc = new Scanner(System.in);
 	}
+	public Message(int n,Stoppable s) {
+		sleep =n;
+		inter = true;
+		this.s = s;
+	}
 
 	public void run() {
+		if (inter) {
+			try {
+				Thread.sleep(sleep);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			s.interrupt();
+		}
+		else {
 		while (true) {
 			if (sc.hasNext()) {
 				String x = sc.next();
@@ -38,7 +55,7 @@ public class Message extends Thread{
 					sc.reset();
 				}
 			}
-		}
+		}}
 	}
 
 	//this probs matches invalid strings but so does the sample...
