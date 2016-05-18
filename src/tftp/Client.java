@@ -62,7 +62,6 @@ public class Client extends Stoppable{
 							e.printStackTrace();
 							System.exit(1);
 						}
-						System.out.println("ye, sent again");
 						timeout = false;
 						try {
 							sendReceiveSocket.setSoTimeout(1500);
@@ -75,7 +74,7 @@ public class Client extends Stoppable{
 							if (shutdown||timeoutCounter==5) {
 								System.exit(0);
 							}
-							System.out.println("Timed out, retransmitting.  "+timeoutCounter);
+							System.out.println("Timed out, retransmitting.  ");
 							Message.printOutgoing(super.sendPacket,"Retransmit:",verbose);
 						}
 					}

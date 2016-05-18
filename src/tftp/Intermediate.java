@@ -56,17 +56,9 @@ public class Intermediate extends Stoppable{
 				if (timeoutCount ==5) {
 					return;
 				}
-				if (this.isInterrupted()) {
+				if (Thread.interrupted()) {
 					actualDelay();
-					System.out.println("We did the delay    " + System.currentTimeMillis());
-					try {
-						Thread.sleep(1);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
 				}
-				System.out.println("New time through the loop.\n"+this+"\n");
 				byte data[] = new byte[516];
 				receivePacket = new DatagramPacket(data, data.length);
 				try {
@@ -84,7 +76,6 @@ public class Intermediate extends Stoppable{
 					x++;
 				}				
 				if (!timeout) {
-					System.out.println(errorType+"      "+receivePacket.getPort()+"       "+timeoutCount+activeCount());
 					errorCheck(replySocket, "Client");				
 					}
 				try {
@@ -127,12 +118,6 @@ public class Intermediate extends Stoppable{
 		delayPacket = sendPacket;
 		delaySocket = del;
 		new Message(time,this).start();
-		/*try {
-			Thread.sleep(time);
-		} catch (InterruptedException e ) {
-			e.printStackTrace();
-			System.exit(1);
-		}*/
 	}
 	private void actualDelay() {
 		try {
@@ -167,13 +152,11 @@ public class Intermediate extends Stoppable{
 		if(packetType.toUpperCase().equals("RRQ")||packetType.toUpperCase().equals("WRQ"))
 			{				
 				specialRequest = true;
-				System.out.println("setting special");
 			}
 
 			if(errorType.toUpperCase().contains("DELAY") && specialRequest){
-				System.out.println("about to delay" +  System.currentTimeMillis());
+				System.out.println("Delaying last received packet for" + time + "milliseconds.");
 				delay(serverSideSocket);
-				System.out.println("delayed" + System.currentTimeMillis());
 				specialRequest = false;
 			}			
 			else if(errorType.toUpperCase().contains("DUPLICATE") && specialRequest){
@@ -183,7 +166,6 @@ public class Intermediate extends Stoppable{
 			}
 
 			if(!errorType.toUpperCase().contains("LOSE")&&!errorType.toUpperCase().contains("DELAY")){
-				System.out.println("sending");
 				try {
 					serverSideSocket.send(sendPacket);
 				} catch (IOException e) {
@@ -218,24 +200,19 @@ public class Intermediate extends Stoppable{
 		
 		if(packetType.equals(getOpCode(receivePacket.getData())) && Message.parseBlock(receivePacket.getData()) == packetNumber){
 			if(errorType.toUpperCase().contains("DELAY")){
-				System.out.println("delayed" + System.currentTimeMillis());
 				delay(socket);
-				System.out.println("delayed" + System.currentTimeMillis());
 
 			}
 			else if(errorType.toUpperCase().contains("DUPLICATE")){
-				System.out.println("Duplicating.");
 				duplicate(sendPacket, socket);
 			}					
 			if((!errorType.toUpperCase().contains("LOSE"))&&!(errorType.toUpperCase().contains("DELAY"))){
 				
 				try {
-					System.out.println("this");
 					socket.send(sendPacket);
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
-				} //send to server
+				} 
 				Message.printOutgoing(sendPacket, "Intermediate Host - " + host + "Side",verbose);
 			}
 			else {
@@ -247,7 +224,6 @@ public class Intermediate extends Stoppable{
 			try {
 				socket.send(sendPacket);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			Message.printOutgoing(sendPacket, "Intermediate Host - " + host + "Side", verbose);

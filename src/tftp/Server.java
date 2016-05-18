@@ -89,7 +89,6 @@ public class Server extends Stoppable{
 	public void receiveAndReply()
 	{
 		while (!shutdown) {
-			//System.out.println(activeCount());
 			timeout = false;
 			byte data[] = new byte[516];
 			receivePacket = new DatagramPacket(data, data.length);
@@ -125,7 +124,7 @@ public class Server extends Stoppable{
 
 	public static void main( String args[] )
 	{
-		System.out.println("Press q to quit or v to toggle verbose mode.");
+		System.out.println("Press q to quit or v to toggle verbose mode.\nVerbose mode is on by default.");
 		Server c = new Server();
 		new Message(c).start();
 		c.receiveAndReply();
