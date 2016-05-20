@@ -129,6 +129,11 @@ public class Message extends Thread{
 		}
 		return 256*x+y;
 	}
+	
+	public static byte[] toBlock(int n){
+		byte[] b = {(byte) (n/256), (byte) (n%256)};
+		return b;
+	}
 
 	public static String parseFilename(String data) {
 		return data.split("\0")[1].substring(1);

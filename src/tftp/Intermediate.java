@@ -10,11 +10,9 @@ public class Intermediate extends Stoppable{
 	int replyPort, serverPort;
 	InetAddress replyAddress;
 
-	static String packetType = "";
-	static int packetNumber = 0;
-	static int time=0;
-	static String errorType = "";
-
+	static String packetType = "", errorType = "", packetError = "";
+	static int packetNumber = 0, time=0;
+	
 	public Intermediate() {	
 		try {
 			//create the two sockets which always exist, one on port 23 to receive requests from the client
@@ -164,12 +162,18 @@ public class Intermediate extends Stoppable{
 				errorType = "";
 				new Intermediate(receivePacket, verbose, replyPort).start();
 			}
-
+			else if(errorType.toUpperCase().contains("UNKNOWN") && specialRequest){
+				specialRequest = false;													////////////////UNKNOWN for Read Write may not be needed\\\\\\\\\\\\\\\\\\
+			}
+			else if(errorType.toUpperCase().contains("CORRUPT") && specialRequest){
+				specialRequest = false;
+				corruptPacket();				
+			}
+			
 			if(!errorType.toUpperCase().contains("LOSE")&&!errorType.toUpperCase().contains("DELAY")){
 				try {
 					serverSideSocket.send(sendPacket);
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				Message.printOutgoing(sendPacket, "Intermediate Host", verbose);
@@ -179,7 +183,6 @@ public class Intermediate extends Stoppable{
 					try {
 						serverSideSocket.send(sendPacket);
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
@@ -205,9 +208,24 @@ public class Intermediate extends Stoppable{
 			}
 			else if(errorType.toUpperCase().contains("DUPLICATE")){
 				duplicate(sendPacket, socket);
-			}					
-			if((!errorType.toUpperCase().contains("LOSE"))&&!(errorType.toUpperCase().contains("DELAY"))){
-				
+			}
+			else if(errorType.toUpperCase().contains("UNKNOWN")){
+				try {
+					DatagramSocket tempSendSocket = new DatagramSocket(47);   /////random packet
+					tempSendSocket.send(sendPacket);
+					tempSendSocket.close();
+				} catch (SocketException e) {
+					e.printStackTrace();
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			else if(errorType.toUpperCase().contains("CORRUPT")){
+				corruptPacket();
+			}
+			
+			if((!errorType.toUpperCase().contains("LOSE"))&&!(errorType.toUpperCase().contains("DELAY"))){				
 				try {
 					socket.send(sendPacket);
 				} catch (IOException e) {
@@ -229,10 +247,39 @@ public class Intermediate extends Stoppable{
 			Message.printOutgoing(sendPacket, "Intermediate Host - " + host + "Side", verbose);
 		}
 	}
-
-
-
-
+	
+	
+	
+	private void corruptPacket(){
+		byte[] data = sendPacket.getData();
+		if(packetError.toUpperCase().contains("INVALID OPCODE")){
+			data[1] = 7;
+			sendPacket.setData(data);
+		}
+		else if(packetError.toUpperCase().contains("INVALID MODE")){
+			data[data.length-2] = 'x';
+			sendPacket.setData(data);
+		}
+		else if(packetError.toUpperCase().contains("BLOCK NUMBER TOO HIGH")){			
+			data[2] = Message.toBlock(Message.parseBlock(receivePacket.getData()) + 10)[0];
+			data[3] = Message.toBlock(Message.parseBlock(receivePacket.getData()) + 10)[1];
+			sendPacket.setData(data);
+		}
+		else if(packetError.toUpperCase().contains("NO TERMINATOR")){
+			try {
+				sendPacket = new DatagramPacket(data, receivePacket.getLength()-1,InetAddress.getLocalHost(),sendPacket.getPort());
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+			}
+		}
+		else if(packetError.toUpperCase().contains("TOO LONG")){
+			try {
+				sendPacket = new DatagramPacket(data, receivePacket.getLength()+10,InetAddress.getLocalHost(),sendPacket.getPort());
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
 	/*
 	 * forward takes all messages from the client and forwards them on to the server
@@ -259,112 +306,246 @@ public class Intermediate extends Stoppable{
 
 		}
 	}
-
+	
 	public static void main (String[] args) {
 		Intermediate i = new Intermediate();		
-		String x;				
-		
+		String x;	
 		//make this loop ideally
 		while(true) {
 			Scanner sc = new Scanner(System.in);
-		System.out.println("What error would you like to simulate? \n (de)layed packet, (l)ost packet, (du)plicated, or (n)one?");
-		if(sc.hasNext()) {
-			x = sc.next();
-			if (x.contains("de")||x.contains("De")||x.contains("DE")||x.contains("dE")) {
-				errorType = "Delay";
-				System.out.println("How long would you like to delay the packet for? (milliseconds)");
-				time = sc.nextInt();	
-				System.out.println("What type of packet would you like to delay? \n (R)RQ, (W)RQ, (D)ATA, (A)CK");
-				packetType = sc.next();
-				if(packetType.contains("D")||packetType.contains("d")){
-					packetType ="DATA";
-					System.out.println("What DATA number would you like to delay? (ex. 1, 2 etc.)");
-					packetNumber = sc.nextInt();
-					System.out.println("Delaying " + packetType + " " + packetNumber + " for " + time + " milliseconds");
+			System.out.println("What type of error would you like to simulate? \n (n)etwork error or (p)acket error?");
+			if(sc.hasNext()) {
+				x = sc.next();
+				if(x.contains("P")||x.contains("p")) {
+					System.out.println("What packet error would you like to simulate? \n (c)orrupted packet (Error Code 4) or (u)nknown source (Error Code 5)?");
+					x = sc.next();
+					if(x.contains("c")||x.contains("C")) {
+						errorType = "Corrupted";
+						System.out.println("What type of packet would you like to Corrupt? \n (R)RQ, (W)RQ, (D)ATA, (A)CK");
+						packetType = sc.next();
+						if(packetType.contains("D")||packetType.contains("d")){
+							packetType ="DATA";	
+							System.out.println("What DATA number would you like to Corrupt? (ex. 1, 2 etc.)");
+							packetNumber = sc.nextInt();
+							System.out.println("How would you like to Corrupt the Data packet? \n (i)nvalid opcode or (b)lock number too high or (n)o null terminator or (t)oo long");
+							x = sc.next();
+							if(x.contains("i")||x.contains("I")){
+								packetError = "Invalid Opcode";
+							}
+							else if(x.contains("b")||x.contains("B")){
+								packetError = "Block Number Too High";
+							}
+							else if(x.contains("n")||x.contains("N")){
+								packetError = "No Terminator";
+							}
+							else if(x.contains("t")||x.contains("T")){
+								packetError = "Too Long";
+							}
+							else{
+								sc.reset(); //clear scanner
+							}
+							System.out.println("Corrupting " + packetType + " " + packetNumber + ". Error: " + packetError);
+						}
+						else if(packetType.contains("A")||packetType.contains("a")){
+							packetType ="ACK";
+							System.out.println("What ACK number would you like to Corrupt? (ex. 1, 2 etc.)");
+							packetNumber = sc.nextInt();
+							System.out.println("How would you like to Corrupt the ACK packet? \n (i)nvalid opcode or (b)lock number too high or (n)o null terminator or (t)oo long");
+							x = sc.next();
+							if(x.contains("i")||x.contains("I")){
+								packetError = "Invalid Opcode";
+							}
+							else if(x.contains("b")||x.contains("B")){
+								packetError = "Block Number Too High";
+							}
+							else if(x.contains("n")||x.contains("N")){
+								packetError = "No Terminator";
+							}
+							else if(x.contains("t")||x.contains("T")){
+								packetError = "Too Long";
+							}
+							else{
+								sc.reset(); //clear scanner
+							}
+							System.out.println("Corrupting " + packetType + " " + packetNumber + ". Error: " + packetError);
+						}
+						else if(packetType.contains("W")||packetType.contains("w")){
+							packetType = "WRQ";
+							System.out.println("How would you like to Corrupt the WRQ? \n (i)nvalid opcode or (in)valid mode or (n)o null terminator");
+							x = sc.next();
+							if(x.contains("i")||x.contains("I")){
+								packetError = "Invalid Opcode";
+							}
+							else if(x.contains("n")||x.contains("N")){
+								packetError = "No Terminator";
+							}
+							else if(x.contains("in")||x.contains("IN")||x.contains("In")||x.contains("iN")){
+								packetError = "Invalid Mode";
+							}
+							else{
+								sc.reset(); //clear scanner
+							}
+							System.out.println("Corrupting " + packetType + ". Error: " + packetError);
+						}
+						else if(packetType.contains("R")||packetType.contains("r")){
+							packetType = "RRQ";
+							System.out.println("How would you like to Corrupt the RRQ? \n (i)nvalid opcode or (in)valid mode or (n)o null terminator");
+							x = sc.next();
+							if(x.contains("i")||x.contains("I")){
+								packetError = "Invalid Opcode";
+							}
+							else if(x.contains("n")||x.contains("N")){
+								packetError = "No Terminator";
+							}
+							else if(x.contains("in")||x.contains("IN")||x.contains("In")||x.contains("iN")){
+								packetError = "Invalid Mode";
+							}
+							else{
+								sc.reset(); //clear scanner
+							}
+							System.out.println("Corrupting " + packetType + ". Error: " + packetError);
+						}
+						else{
+							sc.reset(); //clear scanner
+						}						
+					}
+					else if(x.contains("u")||x.contains("U")) { //////////////////Read Write may be able to be removed\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+						errorType = "Unknown";
+						System.out.println("What type of packet would you like to send from an Unknown Source? \n (R)RQ, (W)RQ, (D)ATA, (A)CK");  
+						packetType = sc.next();
+						if(packetType.contains("D")||packetType.contains("d")){
+							packetType ="DATA";
+							System.out.println("What DATA number would you like to send the Unknown Source packet before? (ex. 1, 2 etc.)");
+							packetNumber = sc.nextInt();
+							System.out.println("Sending " + packetType + " " + packetNumber + " from an Unknown Source");
+						}
+						else if(packetType.contains("A")||packetType.contains("a")){
+							packetType ="ACK";
+							System.out.println("What ACK number would you like to send the Unknown Source packet before? (ex. 1, 2 etc.)");
+							packetNumber = sc.nextInt();
+							System.out.println("Sending " + packetType + " " + packetNumber + " from an Unknown Source");
+						}
+						else if(packetType.contains("W")||packetType.contains("w")){
+							packetType = "WRQ";
+							System.out.println("Sending " + packetType + " from an Unknown Source");
+						}
+						else if(packetType.contains("R")||packetType.contains("r")){
+							packetType = "RRQ";
+							System.out.println("Sending " + packetType + " from an Unknown Source");
+						}
+						else{
+							sc.reset(); //clear scanner
+						}
+					}
+					else {
+						sc.reset();
+					}
 				}
-				else if(packetType.contains("A")||packetType.contains("a")){
-					packetType ="ACK";
-					System.out.println("What ACK number would you like to delay? (ex. 1, 2 etc.)");
-					packetNumber = sc.nextInt();
-					System.out.println("Delaying " + packetType + " " + packetNumber + " for " + time + " milliseconds");
+				else if(x.contains("N")||x.contains("n")) {
+					System.out.println("What network error would you like to simulate? \n (de)layed packet, (l)ost packet, (du)plicated packet or (n)one?");
+					if(sc.hasNext()) {
+						x = sc.next();
+						if (x.contains("de")||x.contains("De")||x.contains("DE")||x.contains("dE")) {
+							errorType = "Delay";
+							System.out.println("How long would you like to delay the packet for? (milliseconds)");
+							time = sc.nextInt();	
+							System.out.println("What type of packet would you like to delay? \n (R)RQ, (W)RQ, (D)ATA, (A)CK");
+							packetType = sc.next();
+							if(packetType.contains("D")||packetType.contains("d")){
+								packetType ="DATA";
+								System.out.println("What DATA number would you like to delay? (ex. 1, 2 etc.)");
+								packetNumber = sc.nextInt();
+								System.out.println("Delaying " + packetType + " " + packetNumber + " for " + time + " milliseconds");
+							}
+							else if(packetType.contains("A")||packetType.contains("a")){
+								packetType ="ACK";
+								System.out.println("What ACK number would you like to delay? (ex. 1, 2 etc.)");
+								packetNumber = sc.nextInt();
+								System.out.println("Delaying " + packetType + " " + packetNumber + " for " + time + " milliseconds");
+							}
+							else if(packetType.contains("W")||packetType.contains("w")){
+								packetType = "WRQ";
+								System.out.println("Delaying " + packetType + " for " + time + " milliseconds");
+							}
+							else if(packetType.contains("R")||packetType.contains("r")){
+								packetType = "RRQ";
+								System.out.println("Delaying " + packetType + " for " + time + " milliseconds");
+							}
+							else{
+								sc.reset(); //clear scanner
+							}
+						}
+						else if (x.contains("du")||x.contains("Du")||x.contains("DU")||x.contains("dU")) {
+							errorType = "Duplicate";
+							System.out.println("How long after the first packet would you like the duplicated packet to send? (milliseconds)");
+							time = sc.nextInt();
+							System.out.println("What type of packet would you like to duplicate? \n (R)RQ, (W)RQ, (D)ATA, (A)CK");
+							packetType = sc.next();
+							if(packetType.contains("D")||packetType.contains("d")){
+								packetType ="DATA";
+								System.out.println("What DATA number would you like to duplicate? (ex. 1, 2 etc.)");
+								packetNumber = sc.nextInt();
+								System.out.println("Duplicating " + packetType + " " + packetNumber + " after " + time + " milliseconds");
+							}
+							else if(packetType.contains("A")||packetType.contains("a")){
+								packetType ="ACK";
+								System.out.println("What ACK number would you like to duplicate? (ex. 1, 2 etc.)");
+								packetNumber = sc.nextInt();
+								System.out.println("Duplicating " + packetType + " " + packetNumber + " after " + time + " milliseconds");
+							}
+							else if(packetType.contains("W")||packetType.contains("w")){
+								packetType = "WRQ";
+								System.out.println("Duplicating " + packetType + " after " + time + " milliseconds");
+							}
+							else if(packetType.contains("R")||packetType.contains("r")){
+								packetType = "RRQ";
+								System.out.println("Duplicating " + packetType + " after " + time + " milliseconds");
+							}
+							else{
+								sc.reset(); //clear scanner
+							}
+						}
+						else if (x.contains("l")||x.contains("L")) {
+							errorType = "Lose";
+							System.out.println("What type of packet would you like to lose? \n (R)RQ, (W)RQ, (D)ATA, (A)CK");
+							packetType = sc.next();
+							if(packetType.contains("D")||packetType.contains("d")){
+								packetType ="DATA";
+								System.out.println("What DATA number would you like to lose? (ex. 1, 2 etc.)");
+								packetNumber = sc.nextInt();
+								System.out.println("Losing " + packetType + " " + packetNumber);
+							}
+							else if(packetType.contains("A")||packetType.contains("a")){
+								packetType ="ACK";
+								System.out.println("What ACK number would you like to lose? (ex. 1, 2 etc.)");
+								packetNumber = sc.nextInt();
+								System.out.println("Losing " + packetType + " " + packetNumber);
+							}
+							else if(packetType.contains("w")||packetType.contains("W")){
+								packetType = "WRQ";
+								System.out.println("Losing " + packetType);
+							}
+							else if(packetType.contains("r")||packetType.contains("R")){
+								packetType = "RRQ";
+								System.out.println("Losing " + packetType);
+							}
+							else{
+								sc.reset(); //clear scanner
+							}
+						}
+						else if (x.contains("n")||x.contains("N")) {
+							System.out.println("No errors will be simulated");				
+						}
+						else {
+							sc.reset(); //clear scanner
+						}
+					}
 				}
-				else if(packetType.contains("W")||packetType.contains("w")){
-					packetType = "WRQ";
-					System.out.println("Delaying " + packetType + " for " + time + " milliseconds");
-				}
-				else if(packetType.contains("R")||packetType.contains("r")){
-					packetType = "RRQ";
-					System.out.println("Delaying " + packetType + " for " + time + " milliseconds");
-				}
-				else{
+				else {
 					sc.reset(); //clear scanner
 				}
 			}
-			else if (x.contains("du")||x.contains("Du")||x.contains("DU")||x.contains("dU")) {
-				errorType = "Duplicate";
-				System.out.println("How long after the first packet would you like the duplicated packet to send? (milliseconds)");
-				time = sc.nextInt();
-				System.out.println("What type of packet would you like to duplicate? \n (R)RQ, (W)RQ, (D)ATA, (A)CK");
-				packetType = sc.next();
-				if(packetType.contains("D")||packetType.contains("d")){
-					packetType ="DATA";
-					System.out.println("What DATA number would you like to duplicate? (ex. 1, 2 etc.)");
-					packetNumber = sc.nextInt();
-					System.out.println("Duplicating " + packetType + " " + packetNumber + " after " + time + " milliseconds");
-				}
-				else if(packetType.contains("A")||packetType.contains("a")){
-					packetType ="ACK";
-					System.out.println("What ACK number would you like to duplicate? (ex. 1, 2 etc.)");
-					packetNumber = sc.nextInt();
-					System.out.println("Duplicating " + packetType + " " + packetNumber + " after " + time + " milliseconds");
-				}
-				else if(packetType.contains("W")||packetType.contains("w")){
-					packetType = "WRQ";
-					System.out.println("Duplicating " + packetType + " after " + time + " milliseconds");
-				}
-				else if(packetType.contains("R")||packetType.contains("r")){
-					packetType = "RRQ";
-					System.out.println("Duplicating " + packetType + " after " + time + " milliseconds");
-				}
-				else{
-					sc.reset(); //clear scanner
-				}
-			}
-			else if (x.contains("l")||x.contains("L")) {
-				errorType = "Lose";
-				System.out.println("What type of packet would you like to lose? \n (R)RQ, (W)RQ, (D)ATA, (A)CK");
-				packetType = sc.next();
-				if(packetType.contains("D")||packetType.contains("d")){
-					packetType ="DATA";
-					System.out.println("What DATA number would you like to lose? (ex. 1, 2 etc.)");
-					packetNumber = sc.nextInt();
-					System.out.println("Losing " + packetType + " " + packetNumber);
-				}
-				else if(packetType.contains("A")||packetType.contains("a")){
-					packetType ="ACK";
-					System.out.println("What ACK number would you like to lose? (ex. 1, 2 etc.)");
-					packetNumber = sc.nextInt();
-					System.out.println("Losing " + packetType + " " + packetNumber);
-				}
-				else if(packetType.contains("w")||packetType.contains("W")){
-					packetType = "WRQ";
-					System.out.println("Losing " + packetType);
-				}
-				else if(packetType.contains("r")||packetType.contains("R")){
-					packetType = "RRQ";
-					System.out.println("Losing " + packetType);
-				}
-				else{
-					sc.reset(); //clear scanner
-				}
-			}
-			else if (x.contains("n")||x.contains("N")) {
-				System.out.println("No errors will be simulated");				
-			}
-			else {
-				sc.reset(); //clear scanner
-			}
-		}
+		
 		sc.close();		
 		i.forward();
 		}
