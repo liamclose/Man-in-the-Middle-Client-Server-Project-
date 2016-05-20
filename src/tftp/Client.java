@@ -9,7 +9,7 @@ public class Client extends Stoppable{
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendReceiveSocket;
 
-	int serverPort = 23;
+	int serverPort = 69;
 
 	public static final int READ = 1; 
 	public static final int WRITE = 2;
@@ -33,7 +33,7 @@ public class Client extends Stoppable{
 	 */
 	public void sendAndReceive(int opcode) {
 		timeout = true;
-		String format = "ocTeT";
+		String format = "ocTeR";
 		byte msg[] = Message.formatRequest(filename, format, opcode);
 		try {
 			super.sendPacket = new DatagramPacket(msg, msg.length,

@@ -78,6 +78,21 @@ public class Stoppable extends Thread {
 							return;
 						}
 						System.out.println("Timed out. Retransmitting.");
+					} catch (Exception e) {
+						byte[] errorMessage = new byte[e.getMessage().length()+5];
+						errorMessage[0] = 0;
+						errorMessage[1] = 5;
+						errorMessage[2] = 0;
+						errorMessage[3] = 4;
+						System.arraycopy(e.getMessage().getBytes(), 0, errorMessage, 4, e.getMessage().length());
+						DatagramPacket errorPacket = new DatagramPacket(errorMessage,errorMessage.length,receivePacket.getAddress(),receivePacket.getPort());
+						try {
+							sendReceiveSocket.send(errorPacket);
+							Message.printOutgoing(errorPacket, "Server - Error", verbose);
+						} catch (IOException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
 					}
 				}				
 				if ((port!=0)&&(receivePacket.getPort()!=port)) {
@@ -120,7 +135,6 @@ public class Stoppable extends Thread {
 		int timeoutCounter = 0;
 		byte block1 = 0;
 		byte block2 = 0;
-		int newPort = port;
 		byte[] data = new byte[512];
 		byte[] resp = new byte[4];
 		try {
@@ -172,6 +186,9 @@ public class Stoppable extends Thread {
 							System.out.println("Timed out. Retransmitting block.");
 							sendReceiveSocket.send(sendPacket);
 						} 
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
 				}
 				while ((Message.parseBlock(sendPacket.getData())!=Message.parseBlock(receivePacket.getData()))||timeout) { //fuck? no retransmit here?

@@ -4,7 +4,7 @@ import java.io.*;
 import java.net.*;
 //ack 0 not printed
 public class Server extends Stoppable{
-	
+
 	DatagramSocket sendSocket, receiveSocket;
 
 	public static final byte[] dataOne = {0, 3, 0, 1};
@@ -105,17 +105,33 @@ public class Server extends Stoppable{
 				System.exit(1);
 			}
 			//if it passes the validation the Datagram is correctly formed, otherwise something went wrong
-			if (Message.validate(receivePacket)) {
-				Message.printIncoming(receivePacket, "Server",verbose); 
-				new Server(receivePacket, verbose).start();
+			try {
+				if (Message.validate(receivePacket)) {
+					Message.printIncoming(receivePacket, "Server",verbose); 
+					new Server(receivePacket, verbose).start();
 
-			}
-			else if (timeout) { //if we get here because of a timeout we don't want to invoke error code
+				}
+				else if (timeout) { //if we get here because of a timeout we don't want to invoke error code
 
-			}
-			else {
-				System.out.println("Invalid Datagram. Exiting now.");
-				throw new IllegalArgumentException("Invalid Packet");
+				}
+			} catch (Exception e){
+				
+				byte[] errorMessage = new byte[e.getMessage().length()+5];
+				errorMessage[0] = 0;
+				errorMessage[1] = 5;
+				errorMessage[2] = 0;
+				errorMessage[3] = 4;
+				System.arraycopy(e.getMessage().getBytes(), 0, errorMessage, 4, e.getMessage().length());
+				DatagramPacket errorPacket = new DatagramPacket(errorMessage,errorMessage.length,receivePacket.getAddress(),receivePacket.getPort());
+				try {
+					sendSocket = new DatagramSocket();
+					sendSocket.send(errorPacket);
+					Message.printOutgoing(errorPacket, "Server - Error", verbose);
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+
 			}
 
 		}
