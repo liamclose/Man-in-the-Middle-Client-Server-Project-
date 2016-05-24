@@ -61,10 +61,6 @@ public class Message extends Thread{
 	//this probs matches invalid strings but so does the sample...
 	public static boolean validate(DatagramPacket receivePacket, boolean initial) throws MalformedPacketException{
 		String data = new String(receivePacket.getData(),0,receivePacket.getLength());
-		System.out.println(data);
-		for (int i=0;i<data.length();i++) {
-			System.out.println(i + "    " + data.charAt(i)+ "    "+ (byte) data.charAt(i));
-		}
 		if (data.length()<4) {
 			throw new MalformedPacketException("Malformed packet: Not enough data.");
 		}
