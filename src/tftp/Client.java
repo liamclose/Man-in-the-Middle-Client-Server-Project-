@@ -33,7 +33,7 @@ public class Client extends Stoppable{
 	 */
 	public void sendAndReceive(int opcode) {
 		timeout = true;
-		String format = "ocTeR";
+		String format = "ocTet";
 		byte msg[] = Message.formatRequest(filename, format, opcode);
 		try {
 			super.sendPacket = new DatagramPacket(msg, msg.length,

@@ -88,6 +88,7 @@ public class Message extends Thread{
 			return true;
 		}
 		if (Pattern.matches("^\0(\001|\002).+\0.+\0$", data)) {
+			System.out.println(data);
 			throw new Exception("Invalid mode.");
 		}
 		if (data.charAt(0)!=0||data.charAt(1)>5) {
