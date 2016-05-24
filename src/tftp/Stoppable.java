@@ -103,6 +103,15 @@ public class Stoppable extends Thread {
 				port = receivePacket.getPort();
 				Message.printIncoming(receivePacket, "Write",verbose);
 				actual = Message.parseBlock(data);
+
+				if (data[1]==5) {
+					System.out.println("Error received.");
+					return;
+				}
+				else if (expected<actual) {
+					System.out.println("Unexpected block received.");
+					return;
+				}
 				if (expected==actual) {
 					System.out.println("Writing to file.");
 					out.write(data,4,receivePacket.getLength()-4);
@@ -136,7 +145,7 @@ public class Stoppable extends Thread {
 		byte block1 = 0;
 		byte block2 = 0;
 		byte[] data = new byte[512];
-		byte[] resp = new byte[4];
+		byte[] resp = new byte[400];
 		try {
 			boolean empty = true;
 			sendPacket = new DatagramPacket(resp,4);
@@ -158,10 +167,10 @@ public class Stoppable extends Thread {
 				Message.printOutgoing(sendPacket, "Read", verbose);
 				while (timeout) {
 					sendReceiveSocket.send(sendPacket);
-					receivePacket = new DatagramPacket(resp,4);
+					receivePacket = new DatagramPacket(resp,400);
 					try {
 						sendReceiveSocket.setSoTimeout(1500);
-						
+
 						sendReceiveSocket.receive(receivePacket);
 						timeout = false;
 						timeoutCounter = 0;

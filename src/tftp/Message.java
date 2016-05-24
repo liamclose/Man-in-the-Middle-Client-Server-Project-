@@ -87,30 +87,27 @@ public class Message extends Thread{
 			System.out.println("RRQ/WRQ.");
 			return true;
 		}
-		else if (Pattern.matches("^\0(\001|\002).+\0.+\0$", data)) {
+		if (Pattern.matches("^\0(\001|\002).+\0.+\0$", data)) {
 			throw new Exception("Invalid mode.");
 		}
 		if (data.charAt(0)!=0||data.charAt(1)>5) {
 			throw new Exception("Invalid opcode.");
 		}
+		if (Pattern.matches("^\0(\001|\002).+\0.+$", data)||Pattern.matches("^\0(\001|\002).+.+\0$", data)) {
+			throw new Exception("Missing null terminator.");
+		}
 		return false;
 	}
 
-	public static byte[] toBlock(int n) {
-		byte[] b = {(byte) (n/256), (byte) (n%256)};
-		return b;
-	}
-	
 	public static void main(String[] args) {
 		int x = 65535;
 		byte[] b = toBlock(x);
 		byte[] c = new byte[4];
 		System.arraycopy(b,0,c,2,2);
 		System.out.println(x + "   " + toBlock(x)[0] + "  " +toBlock(x)[1] + "   " + parseBlock(c));
-		byte[] data = {0,3,127,33};
-		byte[] data1 = {0,5,0,4,3};
-		DatagramPacket d = new DatagramPacket(data1, 5);
-		DatagramPacket d1 = new DatagramPacket(formatRequest("test.txt","octet",5),17);
+		byte[] data1 = {0,1,6,8,111,99,116,101,116,0};
+		DatagramPacket d = new DatagramPacket(data1, data1.length);
+		DatagramPacket d1 = new DatagramPacket(formatRequest("test.txt","octet",1),17);
 		try {
 			System.out.println(validate(d)+""+validate(d1));
 		} catch (Exception e) {
@@ -181,6 +178,9 @@ public class Message extends Thread{
 			if (opcode==3) {
 				System.out.println("Number of bytes: "+ (len-4));
 			}
+			if (opcode==5) {
+				System.out.println("Error message: " + new String(p.getData(),4,(len-4)));
+			}
 			System.out.println();
 		}
 	}
@@ -204,6 +204,9 @@ public class Message extends Thread{
 			}
 			if (opcode==3) {
 				System.out.println("Number of bytes: "+ (len-4));
+			}
+			if (opcode==5) {
+				System.out.println("Error message: " + new String(p.getData(),4,(len-4)));
 			}
 			System.out.println();
 		}

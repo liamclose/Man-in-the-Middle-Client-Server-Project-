@@ -53,8 +53,8 @@ public class Client extends Stoppable{
 			// Process the received datagram.
 			if (opcode==WRITE) {
 				try {
-					byte[] resp = new byte[4];
-					super.receivePacket = new DatagramPacket(resp,4);
+					byte[] resp = new byte[500];
+					super.receivePacket = new DatagramPacket(resp,500);
 					while (timeout) {
 						try {
 							sendReceiveSocket.send(super.sendPacket);
@@ -80,7 +80,12 @@ public class Client extends Stoppable{
 					}
 					port = super.receivePacket.getPort();
 					BufferedInputStream in = new BufferedInputStream(new FileInputStream(filename));
-					read(in,sendReceiveSocket,port);
+					if (super.receivePacket.getData()[1]<5) {
+						read(in,sendReceiveSocket,port);
+					}
+					else {
+						System.out.println(new String(super.receivePacket.getData(),0,super.receivePacket.getLength()));
+					}
 					in.close();
 
 				} catch (FileNotFoundException e) {
