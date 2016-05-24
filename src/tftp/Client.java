@@ -66,6 +66,9 @@ public class Client extends Stoppable{
 						try {
 							sendReceiveSocket.setSoTimeout(1500);
 							sendReceiveSocket.receive(super.receivePacket);
+							if (!Message.validate(receivePacket, false)) {
+								return;
+							}
 							Message.printIncoming(super.receivePacket, "Client", verbose);
 						} catch (SocketTimeoutException e) {
 							
@@ -76,6 +79,12 @@ public class Client extends Stoppable{
 							}
 							System.out.println("Timed out, retransmitting.  ");
 							Message.printOutgoing(super.sendPacket,"Retransmit:",verbose);
+						} catch (MalformedPacketException e) {
+							Message.printIncoming(receivePacket, "ERROR", verbose);
+							sendPacket = createErrorPacket(e.getMessage(),4,receivePacket.getPort());
+							sendReceiveSocket.send(sendPacket);
+							Message.printOutgoing(sendPacket, "Error", verbose);
+							return;
 						}
 					}
 					port = super.receivePacket.getPort();

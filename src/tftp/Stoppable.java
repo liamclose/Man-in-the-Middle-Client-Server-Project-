@@ -15,38 +15,7 @@ public class Stoppable extends Thread {
 		shutdown = true;
 	} 
 
-	/* TODO
-	 * 	-remove extra print statements
-	 * 	-fix the client menu?
-	 * 	-class descriptions in readme??
-	 * 	-locations of files (specify vs default) etc et c e t   c 
-	 * 		-i mean it kind of works, but.....
-	 * 	-set name for printing in constructors
-	 */
-
-
-	/*
-	 *	Situations
-	 *		RRQ
-	 *		Lose!, Delay! (probs also bad on timeout), Dup!
-	 *		WRQ
-	 *		Lose!, Delay! (bad on timeout), Dup! (file size 0 has probs)
-	 * 		Data 1->n-1
-	 * 		Lose!, Delay, Dup!
-	 *		Data n
-	 *		Lose!, Delay, Dup!
-	 *		Ack0
-	 *		Lose! (except for quit timeout), Delay!, Dup!
-	 *		Ack 1->n-1
-	 *		Lose!, Delay, Dup!
-	 *		Ack n
-	 *		Lose!, Delay, Dup!
-	 */
-
-	/*
-	 * write takes a file outputstream and a communication socket as arguments
-	 * it waits for data on the socket and writes it to the file
-	 */
+	
 
 	public DatagramPacket createErrorPacket(String errorMessage,int errorCode,int port) throws UnknownHostException {
 		byte[] errorBytes = new byte[errorMessage.length()+5];
@@ -58,6 +27,11 @@ public class Stoppable extends Thread {
 		errorBytes[errorBytes.length-1] = 0;
 		return new DatagramPacket(errorBytes,errorBytes.length,InetAddress.getLocalHost(),port);
 	}
+	
+	/*
+	 * write takes a file outputstream and a communication socket as arguments
+	 * it waits for data on the socket and writes it to the file
+	 */
 	public void write(BufferedOutputStream out, DatagramSocket sendReceiveSocket) throws IOException {
 		byte[] resp = new byte[4];
 		resp[0] = 0;
@@ -78,9 +52,11 @@ public class Stoppable extends Thread {
 						timeout = false;
 						timeoutCounter = 0; //client is still alive
 						if (!Message.validate(receivePacket,false)) {
-							System.out.print("Invalid packet.");
-							Message.printIncoming(receivePacket, "ERROR", true);
-							System.exit(0);
+							Message.printIncoming(receivePacket, "ERROR", verbose);
+							sendPacket = createErrorPacket("Malformed Packet.",4,receivePacket.getPort());
+							sendReceiveSocket.send(sendPacket);
+							Message.printOutgoing(sendPacket, "Error", verbose);
+							return;
 						}
 					} catch (SocketTimeoutException e) {
 						timeout = true;
@@ -115,8 +91,9 @@ public class Stoppable extends Thread {
 				}
 				else {
 					if (data[1]==5) {
-						System.out.println("Error received.");
+						Message.printIncoming(receivePacket, "Error", verbose);
 						return;
+
 					}
 					actual = Message.parseBlock(data);
 					if (expected<actual) {
@@ -132,7 +109,6 @@ public class Stoppable extends Thread {
 					}
 					port = receivePacket.getPort();
 					Message.printIncoming(receivePacket, "Write",verbose);
-					
 					System.arraycopy(receivePacket.getData(), 2, resp, 2, 2);
 					sendPacket = new DatagramPacket(resp, resp.length,
 							receivePacket.getAddress(), receivePacket.getPort());

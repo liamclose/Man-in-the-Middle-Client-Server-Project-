@@ -29,7 +29,6 @@ public class Message extends Thread{
 			try {
 				Thread.sleep(sleep);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			s.interrupt();
@@ -62,11 +61,14 @@ public class Message extends Thread{
 	//this probs matches invalid strings but so does the sample...
 	public static boolean validate(DatagramPacket receivePacket, boolean initial) throws MalformedPacketException{
 		String data = new String(receivePacket.getData(),0,receivePacket.getLength());
+		System.out.println(data);
+		for (int i=0;i<data.length();i++) {
+			System.out.println(i + "    " + data.charAt(i)+ "    "+ (byte) data.charAt(i));
+		}
 		if (data.length()<4) {
 			throw new MalformedPacketException("Malformed packet: Not enough data.");
 		}
 		if (Pattern.matches("^\0\005[\000-\007]{2}(.|\012|\015|\0)*$",data)) {
-			System.out.println("Error");
 			return true;
 		}
 		if (Pattern.matches("^\0\003(.|\012|\015){2,}$",data)) {
@@ -76,7 +78,6 @@ public class Message extends Thread{
 			throw new MalformedPacketException("Unexpected opcode on request.");
 		}
 		if (Pattern.matches("^\0\004(.|\012|\015)*$", data)) {
-			System.out.println("Ack.");
 			if (data.length()==4) {
 				if (!initial) {
 					return true;
@@ -86,14 +87,17 @@ public class Message extends Thread{
 			throw new MalformedPacketException("Unexpected opcode.");
 		}
 		if (Pattern.matches("^\0(\001|\002).+\0(([oO][cC][tT][eE][tT])|([nN][eE][tT][aA][sS][cC][iI][iI]))\0$", data)) {
-			System.out.println("RRQ/WRQ.");
 			if (initial) {
 				return true;
 			}
 			throw new MalformedPacketException("Invalid opcode.");
 		}
+		if (Pattern.matches("\0(\001|\002).+\0([\157|\117])", data)) {
+			throw new MalformedPacketException(":/");
+		}
 		if (Pattern.matches("^\0(\001|\002).+\0.+\0$", data)) {
-			System.out.println(data);
+			System.out.println("how");
+			System.out.println();
 			throw new MalformedPacketException("Invalid mode.");
 		}
 		if (data.charAt(0)!=0||data.charAt(1)>5) {

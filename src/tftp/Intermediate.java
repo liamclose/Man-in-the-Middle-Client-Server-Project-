@@ -248,7 +248,9 @@ public class Intermediate extends Stoppable{
 	
 	
 	private void corruptPacket(){
-		byte[] data = sendPacket.getData();
+		byte[] data = new byte[sendPacket.getLength()];
+				System.arraycopy(sendPacket.getData(), 0, data, 0, sendPacket.getLength());
+		System.out.println(new String(data,0,data.length));
 		if(packetError.toUpperCase().contains("INVALID OPCODE")){
 			data[1] = 7;
 			sendPacket.setData(data);
