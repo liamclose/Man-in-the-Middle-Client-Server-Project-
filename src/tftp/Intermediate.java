@@ -250,7 +250,6 @@ public class Intermediate extends Stoppable{
 	private void corruptPacket(){
 		byte[] data = new byte[sendPacket.getLength()];
 				System.arraycopy(sendPacket.getData(), 0, data, 0, sendPacket.getLength());
-		System.out.println(new String(data,0,data.length));
 		if(packetError.toUpperCase().contains("INVALID OPCODE")){
 			data[1] = 7;
 			sendPacket.setData(data);
@@ -295,7 +294,6 @@ public class Intermediate extends Stoppable{
 	 * reply port to continue forwarding messages
 	 */
 	public void forward() {
-		System.out.println(this);
 		while (!shutdown) { //loop forever-ish
 			byte data[] = new byte[516];
 			receivePacket = new DatagramPacket(data, data.length);
@@ -306,7 +304,6 @@ public class Intermediate extends Stoppable{
 				e.printStackTrace();
 				System.exit(1);
 			}
-			System.out.println("Initial");
 			Message.printIncoming(receivePacket, "Intermediate Host",verbose);
 			replyPort = receivePacket.getPort();	
 
