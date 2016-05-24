@@ -162,9 +162,6 @@ public class Intermediate extends Stoppable{
 				errorType = "";
 				new Intermediate(receivePacket, verbose, replyPort).start();
 			}
-			else if(errorType.toUpperCase().contains("UNKNOWN") && specialRequest){
-				specialRequest = false;													////////////////UNKNOWN for Read Write may not be needed\\\\\\\\\\\\\\\\\\
-			}
 			else if(errorType.toUpperCase().contains("CORRUPT") && specialRequest){
 				specialRequest = false;
 				corruptPacket();				
@@ -272,6 +269,15 @@ public class Intermediate extends Stoppable{
 				e.printStackTrace();
 			}
 		}
+		else if(packetError.toUpperCase().contains("UNEXPECTED OPCODE")){			
+			if(data[1]==2){
+				data[1] = 3;
+			}
+			else{
+				data[1] = 2;
+			}
+			sendPacket.setData(data);			
+		}
 		else if(packetError.toUpperCase().contains("TOO LONG")){
 			try {
 				sendPacket = new DatagramPacket(data, receivePacket.getLength()+10,InetAddress.getLocalHost(),sendPacket.getPort());
@@ -327,7 +333,7 @@ public class Intermediate extends Stoppable{
 							packetType ="DATA";	
 							System.out.println("What DATA number would you like to Corrupt? (ex. 1, 2 etc.)");
 							packetNumber = sc.nextInt();
-							System.out.println("How would you like to Corrupt the Data packet? \n (i)nvalid opcode or (b)lock number too high or (n)o null terminator or (t)oo long");
+							System.out.println("How would you like to Corrupt the Data packet? \n (i)nvalid opcode or (b)lock number too high or (u)nexpected opcode");
 							x = sc.next();
 							if(x.contains("i")||x.contains("I")){
 								packetError = "Invalid Opcode";
@@ -335,11 +341,8 @@ public class Intermediate extends Stoppable{
 							else if(x.contains("b")||x.contains("B")){
 								packetError = "Block Number Too High";
 							}
-							else if(x.contains("n")||x.contains("N")){
-								packetError = "No Terminator";
-							}
-							else if(x.contains("t")||x.contains("T")){
-								packetError = "Too Long";
+							else if(x.contains("u")||x.contains("U")){
+								packetError = "Unexpected Opcode";
 							}
 							else{
 								sc.reset(); //clear scanner
@@ -350,7 +353,7 @@ public class Intermediate extends Stoppable{
 							packetType ="ACK";
 							System.out.println("What ACK number would you like to Corrupt? (ex. 1, 2 etc.)");
 							packetNumber = sc.nextInt();
-							System.out.println("How would you like to Corrupt the ACK packet? \n (i)nvalid opcode or (b)lock number too high or (n)o null terminator or (t)oo long");
+							System.out.println("How would you like to Corrupt the ACK packet? \n (i)nvalid opcode or (b)lock number too high or (u)nexpected opcode");
 							x = sc.next();
 							if(x.contains("i")||x.contains("I")){
 								packetError = "Invalid Opcode";
@@ -358,11 +361,8 @@ public class Intermediate extends Stoppable{
 							else if(x.contains("b")||x.contains("B")){
 								packetError = "Block Number Too High";
 							}
-							else if(x.contains("n")||x.contains("N")){
-								packetError = "No Terminator";
-							}
-							else if(x.contains("t")||x.contains("T")){
-								packetError = "Too Long";
+							else if(x.contains("u")||x.contains("U")){
+								packetError = "Unexpected Opcode";
 							}
 							else{
 								sc.reset(); //clear scanner
@@ -371,7 +371,7 @@ public class Intermediate extends Stoppable{
 						}
 						else if(packetType.contains("W")||packetType.contains("w")){
 							packetType = "WRQ";
-							System.out.println("How would you like to Corrupt the WRQ? \n (i)nvalid opcode or (in)valid mode or (n)o null terminator");
+							System.out.println("How would you like to Corrupt the WRQ? \n (i)nvalid opcode or (in)valid mode or (n)o null terminator or (u)nexpected opcode");
 							x = sc.next();
 							if(x.contains("i")||x.contains("I")){
 								packetError = "Invalid Opcode";
@@ -381,6 +381,9 @@ public class Intermediate extends Stoppable{
 							}
 							else if(x.contains("in")||x.contains("IN")||x.contains("In")||x.contains("iN")){
 								packetError = "Invalid Mode";
+							}
+							else if(x.contains("u")||x.contains("U")){
+								packetError = "Unexpected Opcode";
 							}
 							else{
 								sc.reset(); //clear scanner
@@ -389,7 +392,7 @@ public class Intermediate extends Stoppable{
 						}
 						else if(packetType.contains("R")||packetType.contains("r")){
 							packetType = "RRQ";
-							System.out.println("How would you like to Corrupt the RRQ? \n (i)nvalid opcode or (in)valid mode or (n)o null terminator");
+							System.out.println("How would you like to Corrupt the RRQ? \n (i)nvalid opcode or (in)valid mode or (n)o null terminator or (u)nexpected opcode");
 							x = sc.next();
 							if(x.contains("i")||x.contains("I")){
 								packetError = "Invalid Opcode";
@@ -399,6 +402,9 @@ public class Intermediate extends Stoppable{
 							}
 							else if(x.contains("in")||x.contains("IN")||x.contains("In")||x.contains("iN")){
 								packetError = "Invalid Mode";
+							}
+							else if(x.contains("u")||x.contains("U")){
+								packetError = "Unexpected Opcode";
 							}
 							else{
 								sc.reset(); //clear scanner
@@ -409,9 +415,9 @@ public class Intermediate extends Stoppable{
 							sc.reset(); //clear scanner
 						}						
 					}
-					else if(x.contains("u")||x.contains("U")) { //////////////////Read Write may be able to be removed\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+					else if(x.contains("u")||x.contains("U")) { 
 						errorType = "Unknown";
-						System.out.println("What type of packet would you like to send from an Unknown Source? \n (R)RQ, (W)RQ, (D)ATA, (A)CK");  
+						System.out.println("What type of packet would you like to send from an Unknown Source? \n (D)ATA or (A)CK");  
 						packetType = sc.next();
 						if(packetType.contains("D")||packetType.contains("d")){
 							packetType ="DATA";
@@ -424,14 +430,6 @@ public class Intermediate extends Stoppable{
 							System.out.println("What ACK number would you like to send the Unknown Source packet before? (ex. 1, 2 etc.)");
 							packetNumber = sc.nextInt();
 							System.out.println("Sending " + packetType + " " + packetNumber + " from an Unknown Source");
-						}
-						else if(packetType.contains("W")||packetType.contains("w")){
-							packetType = "WRQ";
-							System.out.println("Sending " + packetType + " from an Unknown Source");
-						}
-						else if(packetType.contains("R")||packetType.contains("r")){
-							packetType = "RRQ";
-							System.out.println("Sending " + packetType + " from an Unknown Source");
 						}
 						else{
 							sc.reset(); //clear scanner

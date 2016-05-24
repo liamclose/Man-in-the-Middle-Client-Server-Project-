@@ -15,7 +15,6 @@ Steps to run the project:
 	2. Open intermediate.java, hit run. Follow Console.
 	3. Open Client.java, hit run.
     	4. Follow Prompts in console
-
 		i.   Choose (o)ptions to change to turn Verbose mode off and to choose whether to put in test mode or not. 
 		ii.  Choose Verbose mode if you want detailed prints statments about received and sent data packets.
 		iii. Choose test mode if you want it to go directly from Client to Server rather than through the error simulator (Intermediate).
@@ -24,7 +23,7 @@ Steps to run the project:
 File explanation:
 	- Server.java contains the server code.
 	- Client.java contains the client code.
-	- Intermediate.java contains intermediate host/error simulator code. Option to simulate a delay, duplicate, lost or no error. 
+	- Intermediate.java contains intermediate host/error simulator code. Option to simulate a delay, duplicate, lost, packet error or no error. 
 	- Message.java contains helper code for printing and formatting and validating DatagramPackets.
 	- Stoppable.java contains code abstracted from the Client and Server classes
 	
@@ -32,6 +31,20 @@ File explanation:
 	
 TEST INSTRUCTIONS
 Errors simulated can be tested using the intermediates menu.
+
+New errors added in this iteration were the packet errors described below:
+1.corrupt packet
+	i. invalid opcode- changes the opcode to an opcode that is not 1,2,3,4
+	ii. block number to  high- changes the block number to a gretaer number than it should be
+	iii. unexpected opcode- changes the opcode to a legal but not correct opcode ex. 1 for a DATA packet
+	iv. invalid mode- changes the mode of the packet to an invalid value
+	v. no null terminator- removes the null terminator from a read/write request
+
+2.unknown source packet- sends a DATA or ACK packet from an unknown source (port)
+
+
+*packet errors directly deal with the packet itself whereas network errors deal with sending/not sending the packets and do not munipulate the data within the packets.
+
 	
 To test the program you can run to read or write with all different size of files:
 
@@ -51,6 +64,6 @@ Once you run with a certain file you can find the copied file in server/FILENAME
 RESPONSIBILITY BREAKDOWN
 
 
-Liam - Edited and fixed the UCM diagrams, Updated the error simulator to simulate delayed, duplicated and lost datapacket, testing, and updated the read me.
+Liam - Edited and fixed the UCM diagrams, Updated the error simulator to simulate packet errors 4 (invalid packet) and 5 (unknown sender), testing, and updated the read me.
 Pallavi - Updated UML diagrams, helped with this text file, drew the timing diagrams and helped with the code
 Megan - edited the server and client to handle the simulated errors, testing, and helped with the timing diagrams
