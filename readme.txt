@@ -25,7 +25,8 @@ File explanation:
 	- Client.java contains the client code.
 	- Intermediate.java contains intermediate host/error simulator code. Option to simulate a delay, duplicate, lost, packet error or no error. 
 	- Message.java contains helper code for printing and formatting and validating DatagramPackets.
-	- Stoppable.java contains code abstracted from the Client and Server classes
+	- Stoppable.java contains code abstracted from the Client and Server classes.
+	- MalformedPacketException.java exists as a class to be thrown in the Message.validate function in order to  avoid having to catch generic expresions.
 	
 	
 	
