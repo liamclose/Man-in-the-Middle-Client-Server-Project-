@@ -107,15 +107,21 @@ public class Server extends Stoppable{
 			//if it passes the validation the Datagram is correctly formed, otherwise something went wrong
 			try {
 				if (timeout) {
-
 				}
 				else if (Message.validate(receivePacket,true)) {
 					Message.printIncoming(receivePacket, "Server",verbose); 
 					new Server(receivePacket, verbose).start();
-
 				}
 				else {
-					Message.printIncoming(receivePacket, "Why", verbose);
+					try {
+						DatagramPacket errorPacket = super.createErrorPacket("Invalid packet.", 4, receivePacket.getPort());
+						sendSocket = new DatagramSocket();
+						sendSocket.send(errorPacket);
+						Message.printOutgoing(errorPacket, "Server - Error", verbose);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					sendSocket.close();
 				}
 			} catch (MalformedPacketException e){
 				
@@ -127,7 +133,6 @@ public class Server extends Stoppable{
 				System.arraycopy(e.getMessage().getBytes(), 0, errorMessage, 4, e.getMessage().length());
 				DatagramPacket errorPacket = new DatagramPacket(errorMessage,errorMessage.length,receivePacket.getAddress(),receivePacket.getPort());
 				try {
-					Message.printIncoming(receivePacket, "Why", verbose);
 					sendSocket = new DatagramSocket();
 					sendSocket.send(errorPacket);
 					Message.printOutgoing(errorPacket, "Server - Error", verbose);
@@ -135,9 +140,7 @@ public class Server extends Stoppable{
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
-
 			}
-
 		}
 		receiveSocket.close();
 	}

@@ -9,7 +9,7 @@ public class Client extends Stoppable{
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendReceiveSocket;
 
-	int serverPort = 23;
+	int serverPort = 69;
 
 	public static final int READ = 1; 
 	public static final int WRITE = 2;
@@ -66,7 +66,7 @@ public class Client extends Stoppable{
 						try {
 							sendReceiveSocket.setSoTimeout(1500);
 							sendReceiveSocket.receive(super.receivePacket);
-							if (!Message.validate(receivePacket, false)) {
+							if (!Message.validate(super.receivePacket, false)) {
 								return;
 							}
 							Message.printIncoming(super.receivePacket, "Client", verbose);
@@ -80,20 +80,27 @@ public class Client extends Stoppable{
 							System.out.println("Timed out, retransmitting.  ");
 							Message.printOutgoing(super.sendPacket,"Retransmit:",verbose);
 						} catch (MalformedPacketException e) {
-							Message.printIncoming(receivePacket, "ERROR", verbose);
-							sendPacket = createErrorPacket(e.getMessage(),4,receivePacket.getPort());
-							sendReceiveSocket.send(sendPacket);
-							Message.printOutgoing(sendPacket, "Error", verbose);
+							Message.printIncoming(super.receivePacket, "ERROR", verbose);
+							super.sendPacket = createErrorPacket(e.getMessage(),4,super.receivePacket.getPort());
+							sendReceiveSocket.send(super.sendPacket);
+							Message.printOutgoing(super.sendPacket, "Error", verbose);
 							return;
 						}
 					}
 					port = super.receivePacket.getPort();
 					BufferedInputStream in = new BufferedInputStream(new FileInputStream(filename));
-					if (super.receivePacket.getData()[1]<5) {
+					if (super.receivePacket.getData()[1]==4&&super.receivePacket.getData()[2]==0&&super.receivePacket.getData()[3]==0) {
 						read(in,sendReceiveSocket,port);
 					}
-					else {
-						System.out.println(new String(super.receivePacket.getData(),0,super.receivePacket.getLength()));
+					else if (super.receivePacket.getData()[1]==4){
+						super.sendPacket = createErrorPacket("Invalid block number.",4,super.receivePacket.getPort());
+						sendReceiveSocket.send(super.sendPacket);
+						Message.printOutgoing(super.sendPacket, "Error", verbose);
+					}
+					else{
+						super.sendPacket = createErrorPacket("Invalid opcode.",4,super.receivePacket.getPort());
+						sendReceiveSocket.send(super.sendPacket);
+						Message.printOutgoing(super.sendPacket, "Error", verbose);
 					}
 					in.close();
 
@@ -131,7 +138,8 @@ public class Client extends Stoppable{
 		Client c = new Client();
 		String x;
 		Scanner sc = new Scanner(System.in);
-		System.out.println("(R)ead, (w)rite, (o)ptions, or (q)uit?");
+		System.out.println("(R)ead, (w)rite, toggle (v)erbose, toggle (t)est, or (q)uit?");
+		System.out.println("Default options are verbose mode on, test mode off.");
 		while(sc.hasNext()) {
 			x = sc.next();
 			if (x.contains("R")||x.contains("r")) {
@@ -150,25 +158,23 @@ public class Client extends Stoppable{
 				c.sendAndReceive(WRITE);
 				System.exit(0);
 			}
+			else if (x.contains("v")||x.contains("V")) {
+				c.verbose = !c.verbose;
+				System.out.println("Verbose = " + c.verbose);
+			}
+			else if (x.contains("t")||x.contains("T")) {
+				if (c.serverPort==23) {
+					c.serverPort = 69;
+					System.out.println("Test mode off.");
+				}
+				else {
+					c.serverPort = 23;
+					System.out.println("Test mode on.");
+				}
+			}
 			else if (x.contains("q")||x.contains("Q")) {
 				c.sendReceiveSocket.close();
 				System.exit(0);
-			}
-			else if (x.contains("o")||x.contains("O")) {
-				System.out.println("Would you like to turn off verbose mode? Y/N");
-				x = sc.next();
-				sc.reset();
-				if (x.contains("y")||x.contains("Y")) {
-					c.verbose = false;
-				}
-				System.out.println("Would you like to turn on test mode?");
-				x = sc.next();
-				sc.reset();
-				if (x.contains("y")||x.contains("Y")) {
-					c.serverPort = 23;
-				}
-				System.out.println("(R)ead or (w)rite?");
-
 			}
 			else {
 				sc.reset(); //clear scanner

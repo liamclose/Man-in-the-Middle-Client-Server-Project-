@@ -116,7 +116,7 @@ public class Message extends Thread{
 		}
 		return 256*x+y;
 	}
-	
+
 	public static byte[] toBlock(int n){
 		byte[] b = {(byte) (n/256), (byte) (n%256)};
 		return b;
@@ -163,6 +163,8 @@ public class Message extends Thread{
 			if (opcode<3) {
 				System.out.println("Filename: "+ parseFilename(new String (p.getData(), 0, len)));
 			}
+			else if(opcode==5) {
+			}
 			else {
 				System.out.println("Block number " + parseBlock(p.getData()));
 
@@ -191,6 +193,9 @@ public class Message extends Thread{
 			}
 			if (opcode<3) {
 				System.out.println("Filename: "+ parseFilename(new String (p.getData(), 0, len)));
+			}
+			else if(opcode==5) {
+
 			}
 			else {
 				System.out.println("Block number " + parseBlock(p.getData()));

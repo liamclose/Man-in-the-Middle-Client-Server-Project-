@@ -64,7 +64,7 @@ public class Stoppable extends Thread {
 						if (shutdown||timeoutCounter==10) {
 							return;
 						}
-						System.out.println("Timed out. Retransmitting.");
+						System.out.println("Timed out. Continuing to wait.");
 					} catch (MalformedPacketException e) {
 						sendPacket = createErrorPacket(e.getMessage(),4,receivePacket.getPort());
 						try {
@@ -188,6 +188,13 @@ public class Stoppable extends Thread {
 							Message.printOutgoing(sendPacket, "Error", verbose);
 							return;
 						}
+						if (Message.parseBlock(receivePacket.getData())>Message.parseBlock(sendPacket.getData())) {
+							Message.printIncoming(receivePacket, "ERROR", verbose);
+							sendPacket = createErrorPacket("Invalid block number.",4,receivePacket.getPort());
+							sendReceiveSocket.send(sendPacket);
+							Message.printOutgoing(sendPacket, "Error", verbose);
+							return;
+						}
 						Message.printIncoming(receivePacket,"Read",verbose);
 					} catch (SocketTimeoutException e) {
 						timeout = true;
@@ -208,7 +215,7 @@ public class Stoppable extends Thread {
 					}
 				}
 				//look into this...
-				while ((Message.parseBlock(sendPacket.getData())!=Message.parseBlock(receivePacket.getData()))||timeout) { //fuck? no retransmit here?
+				while ((Message.parseBlock(sendPacket.getData())<Message.parseBlock(receivePacket.getData()))||timeout) { //fuck? no retransmit here?
 					try {
 						sendReceiveSocket.receive(receivePacket);
 						Message.printIncoming(receivePacket,"Final packet",verbose);
