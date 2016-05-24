@@ -47,7 +47,7 @@ public class Stoppable extends Thread {
 	 * write takes a file outputstream and a communication socket as arguments
 	 * it waits for data on the socket and writes it to the file
 	 */
-	
+
 	public DatagramPacket createErrorPacket(String errorMessage,int errorCode,int port) throws UnknownHostException {
 		byte[] errorBytes = new byte[errorMessage.length()+5];
 		System.arraycopy(errorMessage.getBytes(), 0, errorBytes, 4, errorMessage.length());
@@ -65,7 +65,7 @@ public class Stoppable extends Thread {
 		int timeoutCounter = 0;
 		port = 0;
 		int expected = 1;
-		int actual;
+		int actual= 0;
 		byte[] data = new byte[516];
 		timeout = true;
 		try {
@@ -77,7 +77,7 @@ public class Stoppable extends Thread {
 						sendReceiveSocket.receive(receivePacket); //receive from client
 						timeout = false;
 						timeoutCounter = 0; //client is still alive
-						if (!Message.validate(receivePacket)) {
+						if (!Message.validate(receivePacket,false)) {
 							System.out.print("Invalid packet.");
 							Message.printIncoming(receivePacket, "ERROR", true);
 							System.exit(0);
@@ -85,11 +85,11 @@ public class Stoppable extends Thread {
 					} catch (SocketTimeoutException e) {
 						timeout = true;
 						timeoutCounter++;
-						if (shutdown||timeoutCounter==10) { //interrupt?
+						if (shutdown||timeoutCounter==10) {
 							return;
 						}
 						System.out.println("Timed out. Retransmitting.");
-					} catch (Exception e) {
+					} catch (MalformedPacketException e) {
 						sendPacket = createErrorPacket(e.getMessage(),4,receivePacket.getPort());
 						try {
 							sendReceiveSocket.send(sendPacket);
@@ -104,30 +104,39 @@ public class Stoppable extends Thread {
 				if ((port!=0)&&(receivePacket.getPort()!=port)) {
 					System.out.println("ERROR, WRONG PORT");
 					Message.printIncoming(receivePacket, "ERROR", verbose);
-					return;
-				}
-				port = receivePacket.getPort();
-				Message.printIncoming(receivePacket, "Write",verbose);
-				actual = Message.parseBlock(data);
-
-				if (data[1]==5) {
-					System.out.println("Error received.");
-					return;
-				}
-				else if (expected<actual) {
-					sendPacket = createErrorPacket("Unexpected block received.",4,port);
+					sendPacket = createErrorPacket("Unknown TID.",5,receivePacket.getPort());
+				} 
+				else if (data[1]==4) {
+					System.out.println("ERROR, WRONG OPCODE");
+					Message.printIncoming(receivePacket, "ERROR", verbose);
+					sendPacket = createErrorPacket("Unexpected opcode received.",4,receivePacket.getPort());
 					sendReceiveSocket.send(sendPacket);
-					Message.printOutgoing(sendPacket, "Error", verbose);
 					return;
 				}
-				if (expected==actual) {
-					System.out.println("Writing to file.");
-					out.write(data,4,receivePacket.getLength()-4);
-					expected++;
+				else {
+					if (data[1]==5) {
+						System.out.println("Error received.");
+						return;
+					}
+					actual = Message.parseBlock(data);
+					if (expected<actual) {
+						sendPacket = createErrorPacket("Unexpected block received.",4,port);
+						sendReceiveSocket.send(sendPacket);
+						Message.printOutgoing(sendPacket, "Error", verbose);
+						return;
+					}
+					if (expected==actual) {
+						System.out.println("Writing to file.    " +  expected + "    " + actual);
+						out.write(data,4,receivePacket.getLength()-4);
+						expected++;
+					}
+					port = receivePacket.getPort();
+					Message.printIncoming(receivePacket, "Write",verbose);
+					
+					System.arraycopy(receivePacket.getData(), 2, resp, 2, 2);
+					sendPacket = new DatagramPacket(resp, resp.length,
+							receivePacket.getAddress(), receivePacket.getPort());
 				}
-				System.arraycopy(receivePacket.getData(), 2, resp, 2, 2);
-				sendPacket = new DatagramPacket(resp, resp.length,
-						receivePacket.getAddress(), receivePacket.getPort());
 				sendReceiveSocket.send(sendPacket);
 				Message.printOutgoing(sendPacket, this.toString(),verbose);
 				if (receivePacket.getLength()==516) {
@@ -184,12 +193,23 @@ public class Stoppable extends Thread {
 						timeoutCounter = 0;
 
 						if (receivePacket.getPort()!=port) {
-							System.out.println("ERROR, WRONG PORT");
-							System.exit(2);
+							Message.printIncoming(receivePacket, "ERROR", verbose);
+							sendPacket = createErrorPacket("Unknown TID.",5,receivePacket.getPort());
+							sendReceiveSocket.send(sendPacket);
+							Message.printOutgoing(sendPacket, "Error", verbose);
 						}
-						if (!Message.validate(receivePacket)) {
-							System.out.print("Invalid packet.");
-							Message.printIncoming(receivePacket, "ERROR", true);
+						if (!Message.validate(receivePacket,false)) {
+							Message.printIncoming(receivePacket, "ERROR", verbose);
+							sendPacket = createErrorPacket("Malformed Packet.",4,receivePacket.getPort());
+							sendReceiveSocket.send(sendPacket);
+							Message.printOutgoing(sendPacket, "Error", verbose);
+							return;
+						}
+						if (receivePacket.getData()[1]!=4) {
+							Message.printIncoming(receivePacket, "ERROR", verbose);
+							sendPacket = createErrorPacket("Unexpected opcode.",4,receivePacket.getPort());
+							sendReceiveSocket.send(sendPacket);
+							Message.printOutgoing(sendPacket, "Error", verbose);
 							return;
 						}
 						Message.printIncoming(receivePacket,"Read",verbose);
@@ -203,8 +223,7 @@ public class Stoppable extends Thread {
 							System.out.println("Timed out. Retransmitting block.");
 							sendReceiveSocket.send(sendPacket);
 						} 
-					} catch (Exception e) {
-						System.out.println("Invalid opcode. Exiting now.");
+					} catch (MalformedPacketException e) {
 						port = receivePacket.getPort();
 						sendPacket = createErrorPacket(e.getMessage(),4,receivePacket.getPort());
 						sendReceiveSocket.send(sendPacket);
@@ -212,6 +231,7 @@ public class Stoppable extends Thread {
 						return;
 					}
 				}
+				//look into this...
 				while ((Message.parseBlock(sendPacket.getData())!=Message.parseBlock(receivePacket.getData()))||timeout) { //fuck? no retransmit here?
 					try {
 						sendReceiveSocket.receive(receivePacket);

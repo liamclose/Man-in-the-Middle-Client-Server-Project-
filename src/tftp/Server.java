@@ -106,7 +106,7 @@ public class Server extends Stoppable{
 			}
 			//if it passes the validation the Datagram is correctly formed, otherwise something went wrong
 			try {
-				if (Message.validate(receivePacket)) {
+				if (Message.validate(receivePacket,true)) {
 					Message.printIncoming(receivePacket, "Server",verbose); 
 					new Server(receivePacket, verbose).start();
 
@@ -114,7 +114,7 @@ public class Server extends Stoppable{
 				else if (timeout) { //if we get here because of a timeout we don't want to invoke error code
 
 				}
-			} catch (Exception e){
+			} catch (MalformedPacketException e){
 				
 				byte[] errorMessage = new byte[e.getMessage().length()+5];
 				errorMessage[0] = 0;

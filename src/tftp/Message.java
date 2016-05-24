@@ -60,60 +60,49 @@ public class Message extends Thread{
 	}
 
 	//this probs matches invalid strings but so does the sample...
-	public static boolean validate(DatagramPacket receivePacket) throws Exception{
+	public static boolean validate(DatagramPacket receivePacket, boolean initial) throws MalformedPacketException{
 		String data = new String(receivePacket.getData(),0,receivePacket.getLength());
 		if (data.length()<4) {
-			throw new Exception("Malformed packet: Not enough data.");
+			throw new MalformedPacketException("Malformed packet: Not enough data.");
 		}
 		if (Pattern.matches("^\0\005[\000-\007]{2}(.|\012|\015|\0)*$",data)) {
 			System.out.println("Error");
 			return true;
 		}
 		if (Pattern.matches("^\0\003(.|\012|\015){2,}$",data)) {
-			System.out.println("Data.");
-			if (data.length()<517) {
+			if (!initial) {
 				return true;
 			}
-			throw new Exception("Malformed packet: The data packet is too long.");
+			throw new MalformedPacketException("Unexpected opcode on request.");
 		}
 		if (Pattern.matches("^\0\004(.|\012|\015)*$", data)) {
 			System.out.println("Ack.");
 			if (data.length()==4) {
-				return true;
+				if (!initial) {
+					return true;
+				}
+				throw new MalformedPacketException("Unexpected opcode on request.");
 			}
-			throw new Exception("Malformed packet: Ack contained data.");
+			throw new MalformedPacketException("Unexpected opcode.");
 		}
 		if (Pattern.matches("^\0(\001|\002).+\0(([oO][cC][tT][eE][tT])|([nN][eE][tT][aA][sS][cC][iI][iI]))\0$", data)) {
 			System.out.println("RRQ/WRQ.");
-			return true;
+			if (initial) {
+				return true;
+			}
+			throw new MalformedPacketException("Invalid opcode.");
 		}
 		if (Pattern.matches("^\0(\001|\002).+\0.+\0$", data)) {
 			System.out.println(data);
-			throw new Exception("Invalid mode.");
+			throw new MalformedPacketException("Invalid mode.");
 		}
 		if (data.charAt(0)!=0||data.charAt(1)>5) {
-			throw new Exception("Invalid opcode.");
+			throw new MalformedPacketException("Invalid opcode.");
 		}
 		if (Pattern.matches("^\0(\001|\002).+\0.+$", data)||Pattern.matches("^\0(\001|\002).+.+\0$", data)) {
-			throw new Exception("Missing null terminator.");
+			throw new MalformedPacketException("Missing null terminator.");
 		}
 		return false;
-	}
-
-	public static void main(String[] args) {
-		int x = 65535;
-		byte[] b = toBlock(x);
-		byte[] c = new byte[4];
-		System.arraycopy(b,0,c,2,2);
-		System.out.println(x + "   " + toBlock(x)[0] + "  " +toBlock(x)[1] + "   " + parseBlock(c));
-		byte[] data1 = {0,1,6,8,111,99,116,101,116,0};
-		DatagramPacket d = new DatagramPacket(data1, data1.length);
-		DatagramPacket d1 = new DatagramPacket(formatRequest("test.txt","octet",1),17);
-		try {
-			System.out.println(validate(d)+""+validate(d1));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 	public static int parseBlock(byte[] data) {
