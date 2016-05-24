@@ -168,7 +168,9 @@ public class Message extends Thread{
 			System.out.println("Host port: " + p.getPort());
 			int len = p.getLength();
 			System.out.println("Length: " + len);
-			System.out.println("Packet type: "+ ops[opcode]);
+			if (opcode<ops.length) {
+				System.out.println("Packet type: "+ ops[opcode]);
+			}
 			if (opcode<3) {
 				System.out.println("Filename: "+ parseFilename(new String (p.getData(), 0, len)));
 			}
@@ -195,7 +197,9 @@ public class Message extends Thread{
 			System.out.println("Host port: " + p.getPort());
 			int len = p.getLength();
 			System.out.println("Length: " + len);
-			System.out.println("Packet type: "+ ops[opcode]);
+			if (opcode<ops.length) {
+				System.out.println("Packet type: "+ ops[opcode]);
+			}
 			if (opcode<3) {
 				System.out.println("Filename: "+ parseFilename(new String (p.getData(), 0, len)));
 			}

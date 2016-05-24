@@ -9,7 +9,7 @@ public class Client extends Stoppable{
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendReceiveSocket;
 
-	int serverPort = 69;
+	int serverPort = 23;
 
 	public static final int READ = 1; 
 	public static final int WRITE = 2;
@@ -28,7 +28,7 @@ public class Client extends Stoppable{
 
 	/*
 	 * sendAndReceive takes an opcode as an argument and sends a request of that type
-	 * the hardcoded filename is test.txt and the format is specified to be octet.
+	 * the filename is
 	 * Once it has sent the request it waits for the server to respond.
 	 */
 	public void sendAndReceive(int opcode) {

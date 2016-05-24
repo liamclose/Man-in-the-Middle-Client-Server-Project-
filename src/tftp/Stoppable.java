@@ -47,6 +47,17 @@ public class Stoppable extends Thread {
 	 * write takes a file outputstream and a communication socket as arguments
 	 * it waits for data on the socket and writes it to the file
 	 */
+	
+	public DatagramPacket createErrorPacket(String errorMessage,int errorCode,int port) throws UnknownHostException {
+		byte[] errorBytes = new byte[errorMessage.length()+5];
+		System.arraycopy(errorMessage.getBytes(), 0, errorBytes, 4, errorMessage.length());
+		errorBytes[0] = 0;
+		errorBytes[1] = 5;
+		errorBytes[2] = 0;
+		errorBytes[3] = (byte) errorCode;
+		errorBytes[errorBytes.length-1] = 0;
+		return new DatagramPacket(errorBytes,errorBytes.length,InetAddress.getLocalHost(),port);
+	}
 	public void write(BufferedOutputStream out, DatagramSocket sendReceiveSocket) throws IOException {
 		byte[] resp = new byte[4];
 		resp[0] = 0;
@@ -79,16 +90,11 @@ public class Stoppable extends Thread {
 						}
 						System.out.println("Timed out. Retransmitting.");
 					} catch (Exception e) {
-						byte[] errorMessage = new byte[e.getMessage().length()+5];
-						errorMessage[0] = 0;
-						errorMessage[1] = 5;
-						errorMessage[2] = 0;
-						errorMessage[3] = 4;
-						System.arraycopy(e.getMessage().getBytes(), 0, errorMessage, 4, e.getMessage().length());
-						DatagramPacket errorPacket = new DatagramPacket(errorMessage,errorMessage.length,receivePacket.getAddress(),receivePacket.getPort());
+						sendPacket = createErrorPacket(e.getMessage(),4,receivePacket.getPort());
 						try {
-							sendReceiveSocket.send(errorPacket);
-							Message.printOutgoing(errorPacket, "Server - Error", verbose);
+							sendReceiveSocket.send(sendPacket);
+							Message.printOutgoing(sendPacket, "Error", verbose);
+							return;
 						} catch (IOException e1) {
 							// TODO Auto-generated catch block
 							e1.printStackTrace();
@@ -98,7 +104,7 @@ public class Stoppable extends Thread {
 				if ((port!=0)&&(receivePacket.getPort()!=port)) {
 					System.out.println("ERROR, WRONG PORT");
 					Message.printIncoming(receivePacket, "ERROR", verbose);
-					System.exit(2);
+					return;
 				}
 				port = receivePacket.getPort();
 				Message.printIncoming(receivePacket, "Write",verbose);
@@ -109,7 +115,9 @@ public class Stoppable extends Thread {
 					return;
 				}
 				else if (expected<actual) {
-					System.out.println("Unexpected block received.");
+					sendPacket = createErrorPacket("Unexpected block received.",4,port);
+					sendReceiveSocket.send(sendPacket);
+					Message.printOutgoing(sendPacket, "Error", verbose);
 					return;
 				}
 				if (expected==actual) {
@@ -174,7 +182,6 @@ public class Stoppable extends Thread {
 						sendReceiveSocket.receive(receivePacket);
 						timeout = false;
 						timeoutCounter = 0;
-						Message.printIncoming(receivePacket,"Read",verbose);
 
 						if (receivePacket.getPort()!=port) {
 							System.out.println("ERROR, WRONG PORT");
@@ -183,8 +190,9 @@ public class Stoppable extends Thread {
 						if (!Message.validate(receivePacket)) {
 							System.out.print("Invalid packet.");
 							Message.printIncoming(receivePacket, "ERROR", true);
-							System.exit(0);
+							return;
 						}
+						Message.printIncoming(receivePacket,"Read",verbose);
 					} catch (SocketTimeoutException e) {
 						timeout = true;
 						timeoutCounter++;
@@ -196,8 +204,12 @@ public class Stoppable extends Thread {
 							sendReceiveSocket.send(sendPacket);
 						} 
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						System.out.println("Invalid opcode. Exiting now.");
+						port = receivePacket.getPort();
+						sendPacket = createErrorPacket(e.getMessage(),4,receivePacket.getPort());
+						sendReceiveSocket.send(sendPacket);
+						Message.printOutgoing(sendPacket, "Error", verbose);
+						return;
 					}
 				}
 				while ((Message.parseBlock(sendPacket.getData())!=Message.parseBlock(receivePacket.getData()))||timeout) { //fuck? no retransmit here?
