@@ -12,7 +12,7 @@ public class Intermediate extends Stoppable{
 
 	static String packetType = "", errorType = "", packetError = "";
 	static int packetNumber = 0, time=0;
-	
+
 	public Intermediate() {	
 		try {
 			//create the two sockets which always exist, one on port 23 to receive requests from the client
@@ -75,7 +75,7 @@ public class Intermediate extends Stoppable{
 				}				
 				if (!timeout) {
 					errorCheck(replySocket, "Client");				
-					}
+				}
 				try {
 					replySocket.setSoTimeout(600); 
 					replySocket.receive(receivePacket); //receive from client
@@ -85,7 +85,7 @@ public class Intermediate extends Stoppable{
 				} catch (SocketTimeoutException e) {
 					timeout = true;
 				}
-				
+
 				if (!timeout) {
 					errorCheck(serverSideSocket, "Server");
 				}
@@ -143,53 +143,53 @@ public class Intermediate extends Stoppable{
 			System.exit(1);
 		}
 	}
-	
-	
+
+
 	private void readWriteError(){
 		boolean specialRequest = false;
 		if(packetType.toUpperCase().equals("RRQ")||packetType.toUpperCase().equals("WRQ"))
-			{				
-				specialRequest = true;
-			}
+		{				
+			specialRequest = true;
+		}
 
-			if(errorType.toUpperCase().contains("DELAY") && specialRequest){
-				System.out.println("Delaying last received packet for" + time + "milliseconds.");
-				delay(serverSideSocket);
-				specialRequest = false;
-			}			
-			else if(errorType.toUpperCase().contains("DUPLICATE") && specialRequest){
-				specialRequest = false;
-				errorType = "";
-				new Intermediate(receivePacket, verbose, replyPort).start();
+		if(errorType.toUpperCase().contains("DELAY") && specialRequest){
+			System.out.println("Delaying last received packet for" + time + "milliseconds.");
+			delay(serverSideSocket);
+			specialRequest = false;
+		}			
+		else if(errorType.toUpperCase().contains("DUPLICATE") && specialRequest){
+			specialRequest = false;
+			errorType = "";
+			new Intermediate(receivePacket, verbose, replyPort).start();
+		}
+		else if(errorType.toUpperCase().contains("CORRUPT") && specialRequest){
+			specialRequest = false;
+			corruptPacket();				
+		}
+
+		if(!errorType.toUpperCase().contains("LOSE")&&!errorType.toUpperCase().contains("DELAY")){
+			try {
+				serverSideSocket.send(sendPacket);
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-			else if(errorType.toUpperCase().contains("CORRUPT") && specialRequest){
-				specialRequest = false;
-				corruptPacket();				
-			}
-			
-			if(!errorType.toUpperCase().contains("LOSE")&&!errorType.toUpperCase().contains("DELAY")){
+			Message.printOutgoing(sendPacket, "Intermediate Host", verbose);
+		}
+		else{
+			if(!specialRequest){
 				try {
 					serverSideSocket.send(sendPacket);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-				Message.printOutgoing(sendPacket, "Intermediate Host", verbose);
 			}
-			else{
-				if(!specialRequest){
-					try {
-						serverSideSocket.send(sendPacket);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-				else {
-					System.out.println("Lost initial request.");
-					errorType = "";
-				}
+			else {
+				System.out.println("Lost initial request.");
+				errorType = "";
 			}
+		}
 	}
-	
+
 	private void errorCheck(DatagramSocket socket, String host){
 		if(host.toUpperCase().equals("SERVER")){
 			host = "Server";
@@ -197,7 +197,7 @@ public class Intermediate extends Stoppable{
 		else{
 			host = "Client";
 		}
-		
+
 		if(packetType.equals(getOpCode(receivePacket.getData())) && Message.parseBlock(receivePacket.getData()) == packetNumber){
 			if(errorType.toUpperCase().contains("DELAY")){
 				delay(socket);
@@ -221,7 +221,7 @@ public class Intermediate extends Stoppable{
 			else if(errorType.toUpperCase().contains("CORRUPT")){
 				corruptPacket();
 			}
-			
+
 			if((!errorType.toUpperCase().contains("LOSE"))&&!(errorType.toUpperCase().contains("DELAY"))){				
 				try {
 					socket.send(sendPacket);
@@ -244,9 +244,9 @@ public class Intermediate extends Stoppable{
 			Message.printOutgoing(sendPacket, "Intermediate Host - " + host + "Side", verbose);
 		}
 	}
-	
-	
-	
+
+
+
 	private void corruptPacket(){
 		byte[] data = sendPacket.getData();
 		if(packetError.toUpperCase().contains("INVALID OPCODE")){
@@ -276,7 +276,7 @@ public class Intermediate extends Stoppable{
 			else{
 				data[1] = 2;
 			}
-			sendPacket.setData(data);			
+			sendPacket.setData(data);
 		}
 		else if(packetError.toUpperCase().contains("TOO LONG")){
 			try {
@@ -312,17 +312,20 @@ public class Intermediate extends Stoppable{
 
 		}
 	}
-	
+
 	public static void main (String[] args) {
 		Intermediate i = new Intermediate();		
 		String x;	
 		//make this loop ideally
 		while(true) {
 			Scanner sc = new Scanner(System.in);
-			System.out.println("What type of error would you like to simulate? \n (n)etwork error or (p)acket error?");
+			System.out.println("What type of error would you like to simulate? \n (n)etwork error or (p)acket error or (no)ne?");
 			if(sc.hasNext()) {
 				x = sc.next();
-				if(x.contains("P")||x.contains("p")) {
+				if(x.contains("no")||x.contains("NO")||x.contains("No")||x.contains("No")) {
+					System.out.println("No errors will be simulated");				
+				}
+				else if(x.contains("P")||x.contains("p")) {
 					System.out.println("What packet error would you like to simulate? \n (c)orrupted packet (Error Code 4) or (u)nknown source (Error Code 5)?");
 					x = sc.next();
 					if(x.contains("c")||x.contains("C")) {
@@ -440,7 +443,7 @@ public class Intermediate extends Stoppable{
 					}
 				}
 				else if(x.contains("N")||x.contains("n")) {
-					System.out.println("What network error would you like to simulate? \n (de)layed packet, (l)ost packet, (du)plicated packet or (n)one?");
+					System.out.println("What network error would you like to simulate? \n (de)layed packet, (l)ost packet, (du)plicated packet?");
 					if(sc.hasNext()) {
 						x = sc.next();
 						if (x.contains("de")||x.contains("De")||x.contains("DE")||x.contains("dE")) {
@@ -530,10 +533,7 @@ public class Intermediate extends Stoppable{
 							else{
 								sc.reset(); //clear scanner
 							}
-						}
-						else if (x.contains("n")||x.contains("N")) {
-							System.out.println("No errors will be simulated");				
-						}
+						}						
 						else {
 							sc.reset(); //clear scanner
 						}
@@ -543,12 +543,12 @@ public class Intermediate extends Stoppable{
 					sc.reset(); //clear scanner
 				}
 			}
-		
-		sc.close();		
-		i.forward();
+
+			sc.close();		
+			i.forward();
 		}
 		//i.receiveSocket.close(); //close the sockets, right now this will never happen
-	//	i.serverSideSocket.close(); //but in iteration1...when there's a way to exit
-		
+		//	i.serverSideSocket.close(); //but in iteration1...when there's a way to exit
+
 	}
 }
