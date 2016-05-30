@@ -125,7 +125,7 @@ public class Intermediate extends Stoppable{
 			e.printStackTrace();
 		}
 	}
-
+	//printing
 	private void duplicate(DatagramPacket send, DatagramSocket sender){
 		errorType = "";
 		try {
@@ -210,6 +210,7 @@ public class Intermediate extends Stoppable{
 				try {
 					DatagramSocket tempSendSocket = new DatagramSocket(47);   /////random packet
 					tempSendSocket.send(sendPacket);
+					Message.printOutgoing(sendPacket, "Unknown host", verbose);
 					tempSendSocket.close();
 				} catch (SocketException e) {
 					e.printStackTrace();
@@ -375,14 +376,15 @@ public class Intermediate extends Stoppable{
 							packetType = "WRQ";
 							System.out.println("How would you like to Corrupt the WRQ? \n (i)nvalid opcode or (in)valid mode or (n)o null terminator or (u)nexpected opcode");
 							x = sc.next();
-							if(x.contains("i")||x.contains("I")){
-								packetError = "Invalid Opcode";
+							if(x.contains("in")||x.contains("IN")||x.contains("In")||x.contains("iN")){
+								packetError = "Invalid Mode";
 							}
+							
 							else if(x.contains("n")||x.contains("N")){
 								packetError = "No Terminator";
 							}
-							else if(x.contains("in")||x.contains("IN")||x.contains("In")||x.contains("iN")){
-								packetError = "Invalid Mode";
+							else if(x.contains("i")||x.contains("I")){
+								packetError = "Invalid Opcode";
 							}
 							else if(x.contains("u")||x.contains("U")){
 								packetError = "Unexpected Opcode";
@@ -396,14 +398,15 @@ public class Intermediate extends Stoppable{
 							packetType = "RRQ";
 							System.out.println("How would you like to Corrupt the RRQ? \n (i)nvalid opcode or (in)valid mode or (n)o null terminator or (u)nexpected opcode");
 							x = sc.next();
-							if(x.contains("i")||x.contains("I")){
-								packetError = "Invalid Opcode";
+							if(x.contains("in")||x.contains("IN")||x.contains("In")||x.contains("iN")){
+								packetError = "Invalid Mode";
 							}
+							
 							else if(x.contains("n")||x.contains("N")){
 								packetError = "No Terminator";
 							}
-							else if(x.contains("in")||x.contains("IN")||x.contains("In")||x.contains("iN")){
-								packetError = "Invalid Mode";
+							else if(x.contains("i")||x.contains("I")){
+								packetError = "Invalid Opcode";
 							}
 							else if(x.contains("u")||x.contains("U")){
 								packetError = "Unexpected Opcode";
