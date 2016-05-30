@@ -8,6 +8,7 @@ public class MalformedPacketException extends Exception {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	//put the error in here?
 	public MalformedPacketException(String message) {
 		super(message);
 	}

@@ -48,9 +48,9 @@ public class Stoppable extends Thread {
 				while (timeout) {
 					try {
 						sendReceiveSocket.setSoTimeout(1500);
-						sendReceiveSocket.receive(receivePacket); //receive from client
+						sendReceiveSocket.receive(receivePacket); //receive from other
 						timeout = false;
-						timeoutCounter = 0; //client is still alive
+						timeoutCounter = 0; //other is still alive
 						if (!Message.validate(receivePacket,false)) {
 							Message.printIncoming(receivePacket, "ERROR", verbose);
 							sendPacket = createErrorPacket("Malformed Packet.",4,receivePacket.getPort());

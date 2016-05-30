@@ -54,9 +54,25 @@ public class Server extends Stoppable{
 		BufferedInputStream in;
 		try {
 			in = new BufferedInputStream(new FileInputStream ("server/".concat(filename)));
+			
 			super.read(in, sendSocket, receivePacket.getPort());
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			
+			filename = "File " + filename + " does not exist.";
+			byte[] errorBytes = new byte[filename.length()+4];
+			errorBytes[0] = 0;
+			errorBytes[1] = 5;
+			errorBytes[2] = 0;
+			errorBytes[3] = 1;
+			System.arraycopy(filename.getBytes(), 0, errorBytes, 4, filename.length());
+			
+			try {
+				sendPacket = new DatagramPacket(errorBytes,errorBytes.length,InetAddress.getLocalHost(),receivePacket.getPort());
+				Message.printOutgoing(sendPacket, "Error", verbose);
+			} catch (UnknownHostException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -142,6 +158,7 @@ public class Server extends Stoppable{
 				}
 			}
 		}
+		System.out.println("Shutting down. " + (Thread.activeCount()-1) + " transfers still in progress.");
 		receiveSocket.close();
 	}
 
