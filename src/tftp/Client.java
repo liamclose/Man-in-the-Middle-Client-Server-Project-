@@ -31,6 +31,7 @@ public class Client extends Stoppable{
 	 * the filename is
 	 * Once it has sent the request it waits for the server to respond.
 	 */
+	//SENDING B4 OPEN
 	public void sendAndReceive(int opcode) {
 		timeout = true;
 		String format = "ocTet";
@@ -45,7 +46,7 @@ public class Client extends Stoppable{
 		Message.printOutgoing(super.sendPacket, "Client",verbose);
 
 		// Send the datagram packet to the server via the send/receive socket. 
-		
+
 		int timeoutCounter = 0;
 		byte data[] = new byte[516];
 		super.receivePacket = new DatagramPacket(data, data.length);
@@ -71,7 +72,7 @@ public class Client extends Stoppable{
 							}
 							Message.printIncoming(super.receivePacket, "Client", verbose);
 						} catch (SocketTimeoutException e) {
-							
+
 							timeoutCounter++;
 							timeout = true;
 							if (shutdown||timeoutCounter==5) {
@@ -98,7 +99,7 @@ public class Client extends Stoppable{
 						Message.printOutgoing(super.sendPacket, "Error", verbose);
 					}
 					else if (super.receivePacket.getData()[1]==5) {
-						
+
 					}
 					else{
 						super.sendPacket = createErrorPacket("Invalid opcode.",4,super.receivePacket.getPort());
@@ -127,18 +128,14 @@ public class Client extends Stoppable{
 					write(out,sendReceiveSocket);
 					System.out.println("how");
 					out.close();
-				}
-				catch (IOException e) {
-					e.printStackTrace();
+				} catch (IOException e) {
 				}
 			}
 		}
 
 	}
 
-	public static void main(String args[])
-	{
-		
+	public static void main(String args[]) {
 		Client c = new Client();
 		String x;
 		Scanner sc = new Scanner(System.in);
@@ -185,6 +182,6 @@ public class Client extends Stoppable{
 			}
 		}
 		sc.close();
-		
+
 	}
 }

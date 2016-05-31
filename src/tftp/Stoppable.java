@@ -15,7 +15,7 @@ public class Stoppable extends Thread {
 		shutdown = true;
 	} 
 
-	
+
 
 	public DatagramPacket createErrorPacket(String errorMessage,int errorCode,int port) throws UnknownHostException {
 		byte[] errorBytes = new byte[errorMessage.length()+5];
@@ -27,7 +27,7 @@ public class Stoppable extends Thread {
 		errorBytes[errorBytes.length-1] = 0;
 		return new DatagramPacket(errorBytes,errorBytes.length,InetAddress.getLocalHost(),port);
 	}
-	
+
 	/*
 	 * write takes a file outputstream and a communication socket as arguments
 	 * it waits for data on the socket and writes it to the file
@@ -109,7 +109,14 @@ public class Stoppable extends Thread {
 					}
 					if (expected==actual) {
 						System.out.println("Writing to file.    " +  expected + "    " + actual);
-						out.write(data,4,receivePacket.getLength()-4);
+						try {
+							out.write(data,4,receivePacket.getLength()-4);
+						} catch (IOException e) {
+							DatagramPacket errorPacket = createErrorPacket("Disk full.",3,receivePacket.getPort());
+							sendReceiveSocket.send(errorPacket);
+							Message.printOutgoing(errorPacket, "ERROR", verbose);
+							return;
+						}
 						expected++;
 						if (expected==65536) {
 							expected = 0;
@@ -117,7 +124,7 @@ public class Stoppable extends Thread {
 						}
 					}
 					else {
-					System.out.println("NOT writing to file.    " +  expected + "    " + actual);
+						System.out.println("NOT writing to file.    " +  expected + "    " + actual);
 					}
 					port = receivePacket.getPort();
 					Message.printIncoming(receivePacket, "Write",verbose);
@@ -202,6 +209,10 @@ public class Stoppable extends Thread {
 							sendPacket = createErrorPacket("Malformed Packet.",4,receivePacket.getPort());
 							sendReceiveSocket.send(sendPacket);
 							Message.printOutgoing(sendPacket, "Error", verbose);
+							return;
+						}
+						else if (receivePacket.getData()[1]==5) {
+							Message.printIncoming(receivePacket,"ERROR",verbose);
 							return;
 						}
 						else if (receivePacket.getData()[1]!=4) {
