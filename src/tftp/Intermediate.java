@@ -106,7 +106,10 @@ public class Intermediate extends Stoppable{
 		}
 		else if(code[0] == 0 && code[1] == 4){
 			return "ACK";
-		}		
+		}	
+		else if(code[0] == 0 && code[1] == 5){
+			return "ERROR";
+		}	
 		return "";
 	}
 
@@ -197,11 +200,13 @@ public class Intermediate extends Stoppable{
 		else{
 			host = "Client";
 		}
-
-		if(packetType.equals(getOpCode(receivePacket.getData())) && Message.parseBlock(receivePacket.getData()) == packetNumber){
+		
+		if(packetType.equals(getOpCode(receivePacket.getData())) && packetType=="ERROR"){
+			errorOnError(socket, host);
+		}		
+		else if(packetType.equals(getOpCode(receivePacket.getData())) && Message.parseBlock(receivePacket.getData()) == packetNumber){
 			if(errorType.toUpperCase().contains("DELAY")){
 				delay(socket);
-
 			}
 			else if(errorType.toUpperCase().contains("DUPLICATE")){
 				duplicate(sendPacket, socket);
@@ -246,11 +251,50 @@ public class Intermediate extends Stoppable{
 		}
 	}
 
+	private void errorOnError(DatagramSocket socket, String host){
+		if(host.toUpperCase().equals("SERVER")){
+			host = "Server";
+		}
+		else{
+			host = "Client";
+		}	
+		
+		if(errorType.toUpperCase().contains("UNKNOWN")){
+			try {
+				DatagramSocket tempSendSocket = new DatagramSocket(47);   /////random packet
+				tempSendSocket.send(sendPacket);
+				Message.printOutgoing(sendPacket, "Unknown host", verbose);
+				tempSendSocket.close();
+			} catch (SocketException e) {
+				e.printStackTrace();
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		else if(errorType.toUpperCase().contains("CORRUPT")){
+			corruptPacket();
+		}
+
+		if((!errorType.toUpperCase().contains("LOSE"))&&!(errorType.toUpperCase().contains("DELAY"))){				
+			try {
+				socket.send(sendPacket);
+			} catch (IOException e) {
+				e.printStackTrace();
+			} 
+			Message.printOutgoing(sendPacket, "Intermediate Host - " + host + "Side",verbose);
+		}
+		else {
+			errorType = "";
+			System.out.println("Lost packet going to " + host);
+		}		
+	}
+
 
 
 	private void corruptPacket(){
 		byte[] data = new byte[sendPacket.getLength()];
-				System.arraycopy(sendPacket.getData(), 0, data, 0, sendPacket.getLength());
+		System.arraycopy(sendPacket.getData(), 0, data, 0, sendPacket.getLength());
 		if(packetError.toUpperCase().contains("INVALID OPCODE")){
 			data[1] = 7;
 			sendPacket.setData(data);
@@ -270,6 +314,10 @@ public class Intermediate extends Stoppable{
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 			}
+		}
+		else if(packetError.toUpperCase().contains("INVALID ERROR CODE")){
+				data[3] = 9;
+				sendPacket.setData(data);
 		}
 		else if(packetError.toUpperCase().contains("UNEXPECTED OPCODE")){			
 			if(data[1]==2){
@@ -330,7 +378,7 @@ public class Intermediate extends Stoppable{
 					x = sc.next();
 					if(x.contains("c")||x.contains("C")) {
 						errorType = "Corrupted";
-						System.out.println("What type of packet would you like to Corrupt? \n (R)RQ, (W)RQ, (D)ATA, (A)CK");
+						System.out.println("What type of packet would you like to Corrupt? \n (R)RQ, (W)RQ, (D)ATA, (A)CK or (E)rror");
 						packetType = sc.next();
 						if(packetType.contains("D")||packetType.contains("d")){
 							packetType ="DATA";	
@@ -351,6 +399,24 @@ public class Intermediate extends Stoppable{
 								sc.reset(); //clear scanner
 							}
 							System.out.println("Corrupting " + packetType + " " + packetNumber + ". Error: " + packetError);
+						}
+						else if(packetType.contains("E")||packetType.contains("e")){
+							packetType ="ERROR";
+							System.out.println("How would you like to Corrupt the Error packet? \n (i)nvalid opcode or (in)valid error code or (n)o null terminator");
+							x = sc.next();
+							if(x.contains("in")||x.contains("IN")||x.contains("iN")||x.contains("In")){
+								packetError = "Invalid Error Code";
+							}
+							else if(x.contains("i")||x.contains("I")){
+								packetError = "Invalid Opcode";
+							}
+							else if(x.contains("n")||x.contains("N")){
+								packetError = "No Terminator";
+							}
+							else{
+								sc.reset(); //clear scanner
+							}
+							System.out.println("Corrupting " + packetType + ". Error: " + packetError);
 						}
 						else if(packetType.contains("A")||packetType.contains("a")){
 							packetType ="ACK";
@@ -379,7 +445,7 @@ public class Intermediate extends Stoppable{
 							if(x.contains("in")||x.contains("IN")||x.contains("In")||x.contains("iN")){
 								packetError = "Invalid Mode";
 							}
-							
+
 							else if(x.contains("n")||x.contains("N")){
 								packetError = "No Terminator";
 							}
@@ -401,7 +467,7 @@ public class Intermediate extends Stoppable{
 							if(x.contains("in")||x.contains("IN")||x.contains("In")||x.contains("iN")){
 								packetError = "Invalid Mode";
 							}
-							
+
 							else if(x.contains("n")||x.contains("N")){
 								packetError = "No Terminator";
 							}
@@ -422,7 +488,7 @@ public class Intermediate extends Stoppable{
 					}
 					else if(x.contains("u")||x.contains("U")) { 
 						errorType = "Unknown";
-						System.out.println("What type of packet would you like to send from an Unknown Source? \n (D)ATA or (A)CK");  
+						System.out.println("What type of packet would you like to send from an Unknown Source? \n (D)ATA or (A)CK or (E)rror");  
 						packetType = sc.next();
 						if(packetType.contains("D")||packetType.contains("d")){
 							packetType ="DATA";
@@ -435,6 +501,10 @@ public class Intermediate extends Stoppable{
 							System.out.println("What ACK number would you like to send the Unknown Source packet before? (ex. 1, 2 etc.)");
 							packetNumber = sc.nextInt();
 							System.out.println("Sending " + packetType + " " + packetNumber + " from an Unknown Source");
+						}
+						else if(packetType.contains("E")||packetType.contains("e")){
+							packetType ="ERROR";
+							System.out.println("Sending " + packetType + " from an Unknown Source");
 						}
 						else{
 							sc.reset(); //clear scanner
