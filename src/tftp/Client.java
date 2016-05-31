@@ -8,6 +8,7 @@ public class Client extends Stoppable{
 
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendReceiveSocket;
+	Scanner sc;
 
 	int serverPort = 69;
 
@@ -24,6 +25,7 @@ public class Client extends Stoppable{
 			se.printStackTrace();
 			System.exit(1);
 		}
+		sc = new Scanner(System.in);
 	}
 
 	/*
@@ -58,10 +60,10 @@ public class Client extends Stoppable{
 					byte[] resp = new byte[500];
 					super.receivePacket = new DatagramPacket(resp,500);
 					BufferedInputStream in = new BufferedInputStream(new FileInputStream(filename));
-					System.out.println("incorrect.");
 					while (timeout) {
 						try {
 							sendReceiveSocket.send(super.sendPacket);
+							Message.printOutgoing(super.sendPacket, "Initial Request", verbose);
 						} catch (IOException e) {
 							e.printStackTrace();
 							System.exit(1);
@@ -115,15 +117,16 @@ public class Client extends Stoppable{
 
 				} catch (FileNotFoundException e) {
 					System.out.println("File: " + filename + " does not exist.\nPlease enter a new file.");
-					Scanner s = new Scanner(System.in);
-					boolean yes = true;
-					 if (s.hasNext()) {
-							System.out.println("Fefe" + s.next());
-							filename = s.next();
-							s.reset();
-							yes = false;
+					waiting = true;
+					synchronized (this) {
+						try {
+							wait();
+						} catch (InterruptedException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
 						}
-					s.reset();
+					}
+					waiting = false;
 					sendAndReceive(WRITE);
 				}
 				catch (IOException e) {
@@ -135,6 +138,12 @@ public class Client extends Stoppable{
 				try {
 					System.out.println("Creating file output.");
 					BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(filename));
+					try {
+						sendReceiveSocket.send(super.sendPacket);
+					} catch (IOException e1) {
+						e1.printStackTrace();
+						System.exit(1);
+					}
 					write(out,sendReceiveSocket);
 					out.close();
 				} catch (IOException e) { //differentiate between access denied and too much data? and file not found
@@ -142,28 +151,16 @@ public class Client extends Stoppable{
 						System.out.println("l");
 					} 
 					else if (e.getMessage().equals(filename + " (Access is denied)")) {
-						Scanner s = new Scanner(System.in);
 						System.out.println("ugh");
-						while(s.hasNext()) {
-							filename = s.next();
+						if(sc.hasNext()) {
+							filename = sc.next();
 						}
 						sendAndReceive(READ);
 					}
 					else {
 						System.out.println(e.getMessage());
-
-						Scanner s = new Scanner(System.in);
-						while(s.hasNext()) {
-							filename = s.next();
-						}
-						//sendAndReceive()
 					}
-					try {
-						sendReceiveSocket.send(super.sendPacket);
-					} catch (IOException e1) {
-						e1.printStackTrace();
-						System.exit(1);
-					}
+					
 				}
 			}
 		}
@@ -173,27 +170,28 @@ public class Client extends Stoppable{
 	public static void main(String args[]) {
 		Client c = new Client();
 		String x;
-		while (!c.shutdown) {
-			Scanner sc = new Scanner(System.in);
+		//while (!c.shutdown) {
 			System.out.println("(R)ead, (w)rite, toggle (v)erbose, toggle (t)est, or (q)uit?");
 			System.out.println("Default options are verbose mode on, test mode off.");
-			while(sc.hasNext()) { //TODO loop for invalid file (both r/w?) slash just loop in general
-				x = sc.next();
+			while(c.sc.hasNext()) { //TODO loop for invalid file (both r/w?) slash just loop in general
+				x = c.sc.next();
 				if (x.contains("R")||x.contains("r")) {
 					System.out.println("Please enter a filename.");
-					c.filename = sc.next();
-					sc.reset();
-					new Message(c).start();
-					sc.reset();
+					c.filename = c.sc.next();
+					c.sc.reset();
+					new Message(c,c.sc).start();
+					c.sc.reset();
 					c.sendAndReceive(READ);
+					System.exit(0);
 				}
 				else if (x.contains("w")||x.contains("W")) {
 					System.out.println("Please enter a filename.");
-					c.filename = sc.next();
-					sc.reset();
-					new Message(c).start();
-					sc.reset();
+					c.filename = c.sc.next();
+					c.sc.reset();
+					new Message(c,c.sc).start();
+					c.sc.reset();
 					c.sendAndReceive(WRITE);
+					System.exit(0);
 				}
 				else if (x.contains("v")||x.contains("V")) {
 					c.verbose = !c.verbose;
@@ -214,11 +212,11 @@ public class Client extends Stoppable{
 					System.exit(0);
 				}
 				else {
-					sc.reset(); //clear scanner
+					c.sc.reset(); //clear scanner
 				}
 			}
-			//sc.close();
-		}
+			c.sc.close();
+		//}
 
 //		/sc.close();
 	}

@@ -2,6 +2,7 @@ package tftp;
 
 import java.io.*;
 import java.net.*;
+import java.util.Scanner;
 //ack 0 not printed
 public class Server extends Stoppable{
 
@@ -187,7 +188,7 @@ public class Server extends Stoppable{
 	{
 		System.out.println("Press q to quit or v to toggle verbose mode.\nVerbose mode is on by default.");
 		Server c = new Server();
-		new Message(c).start();
+		new Message(c,new Scanner(System.in)).start();
 		c.receiveAndReply();
 		c.receiveSocket.close(); //close the receiving socket
 	}

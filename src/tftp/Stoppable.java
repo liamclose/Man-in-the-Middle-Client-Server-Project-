@@ -10,6 +10,7 @@ public class Stoppable extends Thread {
 	int port;
 	String filename;
 	boolean verbose = true;
+	boolean waiting = false;
 
 	public void setShutdown() {
 		shutdown = true;
@@ -26,6 +27,10 @@ public class Stoppable extends Thread {
 		errorBytes[3] = (byte) errorCode;
 		errorBytes[errorBytes.length-1] = 0;
 		return new DatagramPacket(errorBytes,errorBytes.length,InetAddress.getLocalHost(),port);
+	}
+	
+	public boolean waiting() {
+		return waiting;
 	}
 
 	/*

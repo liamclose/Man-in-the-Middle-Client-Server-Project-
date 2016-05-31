@@ -15,9 +15,9 @@ public class Message extends Thread{
 	boolean inter = false;
 	public static final String[] ops = {"","RRQ","WRQ","DATA","ACK","ERROR"};
 
-	public Message(Stoppable s) {
+	public Message(Stoppable s,Scanner sc) {
 		this.s = s;
-		sc = new Scanner(System.in);
+		this.sc = sc;
 	}
 	public Message(int n,Stoppable s) {
 		sleep =n;
@@ -60,11 +60,17 @@ public class Message extends Thread{
 			while (true) {
 				if (sc.hasNext()) {
 					String x = sc.next();
-					if (x.contains("q")||x.contains("Q")){
+					if (s.waiting()) {
+						s.filename = x;
+						synchronized(s) {
+							s.notify();
+						}
+					}
+					else if (x.equals("q")||x.equals("Q")){
 						s.setShutdown();
 						return;
 					}
-					else if (x.contains("v")||x.contains("V")) {
+					else if (x.equals("v")||x.equals("V")) {
 						if (s.verbose) {
 							System.out.println("Verbose mode turned off.");
 						}
