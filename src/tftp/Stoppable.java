@@ -45,14 +45,11 @@ public class Stoppable extends Thread {
 		boolean wrapped = false;
 		try {
 			do {
-				System.out.println("while   " + sendReceiveSocket.getPort() +"   "+ sendReceiveSocket.getLocalPort());
 				receivePacket = new DatagramPacket(data,516);
 				while (timeout) {
 					try {
-						System.out.println("???");
 						sendReceiveSocket.setSoTimeout(1500);
 						sendReceiveSocket.receive(receivePacket); //receive from other
-						System.out.println("after");
 						timeout = false;
 						timeoutCounter = 0; //other is still alive
 						if (!Message.validate(receivePacket,false)) {
@@ -101,14 +98,12 @@ public class Stoppable extends Thread {
 					}
 					actual = Message.parseBlock(data);
 					if (expected<actual&&!wrapped) {
-						System.out.println(expected + "  " + actual + wrapped);
 						sendPacket = createErrorPacket("Unexpected block received.",4,port);
 						sendReceiveSocket.send(sendPacket);
 						Message.printOutgoing(sendPacket, "Error", verbose);
 						return;
 					}
 					if (expected==actual) {
-						System.out.println("Writing to file.    " +  expected + "    " + actual);
 						try {
 							out.write(data,4,receivePacket.getLength()-4);
 						} catch (IOException e) {
@@ -123,9 +118,6 @@ public class Stoppable extends Thread {
 							wrapped = true;
 						}
 					}
-					else {
-						System.out.println("NOT writing to file.    " +  expected + "    " + actual);
-					}
 					port = receivePacket.getPort();
 					Message.printIncoming(receivePacket, "Write",verbose);
 					System.arraycopy(receivePacket.getData(), 2, resp, 2, 2);
@@ -138,7 +130,15 @@ public class Stoppable extends Thread {
 					timeout = true;
 				}
 			} while (receivePacket.getLength()==516);
-			out.close();
+			try {
+				out.close();
+			} catch (IOException e){
+				DatagramPacket errorPacket = createErrorPacket("Disk full.",3,receivePacket.getPort());
+				sendReceiveSocket.send(errorPacket);
+				Message.printOutgoing(errorPacket, "ERROR", verbose);
+				return;
+				
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -226,7 +226,6 @@ public class Stoppable extends Thread {
 							Message.printIncoming(receivePacket, "ERROR8", verbose);
 							sendPacket = createErrorPacket("Invalid block number.",4,receivePacket.getPort());
 							sendReceiveSocket.send(sendPacket);
-							System.out.println("received: "+ Message.parseBlock(receivePacket.getData()) + "send" +Message.parseBlock(sendPacket.getData()));
 							Message.printOutgoing(sendPacket, "Error", verbose);
 							return;
 						}
