@@ -89,13 +89,16 @@ public class Client extends Stoppable{
 					}
 					port = super.receivePacket.getPort();
 					BufferedInputStream in = new BufferedInputStream(new FileInputStream(filename));
-					if (super.receivePacket.getData()[1]==4&&super.receivePacket.getData()[2]==0&&super.receivePacket.getData()[3]==0) {
+					if (super.receivePacket.getData()[1]==4&&Message.parseBlock(super.receivePacket.getData())==0) {
 						read(in,sendReceiveSocket,port);
 					}
 					else if (super.receivePacket.getData()[1]==4){
 						super.sendPacket = createErrorPacket("Invalid block number.",4,super.receivePacket.getPort());
 						sendReceiveSocket.send(super.sendPacket);
 						Message.printOutgoing(super.sendPacket, "Error", verbose);
+					}
+					else if (super.receivePacket.getData()[1]==5) {
+						
 					}
 					else{
 						super.sendPacket = createErrorPacket("Invalid opcode.",4,super.receivePacket.getPort());
@@ -122,6 +125,7 @@ public class Client extends Stoppable{
 					System.out.println("Creating file output.");
 					BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(filename));
 					write(out,sendReceiveSocket);
+					System.out.println("how");
 					out.close();
 				}
 				catch (IOException e) {
@@ -140,7 +144,7 @@ public class Client extends Stoppable{
 		Scanner sc = new Scanner(System.in);
 		System.out.println("(R)ead, (w)rite, toggle (v)erbose, toggle (t)est, or (q)uit?");
 		System.out.println("Default options are verbose mode on, test mode off.");
-		while(sc.hasNext()) {
+		while(sc.hasNext()) { //TODO loop for invalid file (both r/w?) slash just loop in general
 			x = sc.next();
 			if (x.contains("R")||x.contains("r")) {
 				System.out.println("Please enter a filename.");

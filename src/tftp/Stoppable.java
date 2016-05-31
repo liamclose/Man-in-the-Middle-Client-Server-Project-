@@ -45,18 +45,21 @@ public class Stoppable extends Thread {
 		boolean wrapped = false;
 		try {
 			do {
+				System.out.println("while   " + sendReceiveSocket.getPort() +"   "+ sendReceiveSocket.getLocalPort());
 				receivePacket = new DatagramPacket(data,516);
 				while (timeout) {
 					try {
+						System.out.println("???");
 						sendReceiveSocket.setSoTimeout(1500);
 						sendReceiveSocket.receive(receivePacket); //receive from other
+						System.out.println("after");
 						timeout = false;
 						timeoutCounter = 0; //other is still alive
 						if (!Message.validate(receivePacket,false)) {
 							Message.printIncoming(receivePacket, "ERROR2", verbose);
 							sendPacket = createErrorPacket("Malformed Packet.",4,receivePacket.getPort());
 							sendReceiveSocket.send(sendPacket);
-							Message.printOutgoing(sendPacket, "Error", verbose);
+							Message.printOutgoing(sendPacket, "Error - invalid", verbose);
 							return;
 						}
 					} catch (SocketTimeoutException e) {
@@ -70,7 +73,7 @@ public class Stoppable extends Thread {
 						sendPacket = createErrorPacket(e.getMessage(),4,receivePacket.getPort());
 						try {
 							sendReceiveSocket.send(sendPacket);
-							Message.printOutgoing(sendPacket, "Error", verbose);
+							Message.printOutgoing(sendPacket, "Error - caught", verbose);
 							return;
 						} catch (IOException e1) {
 							// TODO Auto-generated catch block
@@ -191,7 +194,7 @@ public class Stoppable extends Thread {
 							Message.printIncoming(receivePacket, "ERROR5", verbose);
 							DatagramPacket errorPacket = createErrorPacket("Unknown TID.",5,receivePacket.getPort());
 							sendReceiveSocket.send(errorPacket);
-							Message.printOutgoing(errorPacket, "Error", verbose);
+							Message.printOutgoing(errorPacket, "Error - port", verbose);
 							wrongPort = true;
 						}
 						else if (!Message.validate(receivePacket,false)) {

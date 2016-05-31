@@ -1,5 +1,6 @@
 package tftp;
 
+import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 import java.util.regex.Pattern;
@@ -36,9 +37,13 @@ public class Message extends Thread{
 		System.out.println(e.getLength());
 		a.close();
 		b.close();
+		BufferedOutputStream in = new BufferedOutputStream(new FileOutputStream("one.txt"));
+		BufferedOutputStream in2 = new BufferedOutputStream(new FileOutputStream("one.txt"));
+		in.write(c);
+		in2.write(c);
 		}
 		catch (Exception e) {
-			
+			System.out.print(e);
 		}
 	}
 	
@@ -85,6 +90,7 @@ public class Message extends Thread{
 		if (Pattern.matches("^\0\005[\000-\007]{2}(.|\012|\015|\0)*$",data)) {
 			return true;
 		}
+		System.out.println(data.charAt(0) + " f " +data.charAt(1));
 		if (Pattern.matches("^\0\003(.|\012|\015){2,}$",data)) {
 			if (!initial) {
 				return true;
@@ -115,6 +121,7 @@ public class Message extends Thread{
 			throw new MalformedPacketException("Invalid mode.");
 		}
 		if (data.charAt(0)!=0||data.charAt(1)>5) {
+			System.out.println(data.charAt(0) + "  " +data.charAt(1));
 			throw new MalformedPacketException("Invalid opcode.");
 		}
 		if (Pattern.matches("^\0(\001|\002).+\0.+$", data)||Pattern.matches("^\0(\001|\002).+.+\0$", data)) {
@@ -191,6 +198,7 @@ public class Message extends Thread{
 				System.out.println("Number of bytes: "+ (len-4));
 			}
 			if (opcode==5) {
+				System.out.println("Error code: " + p.getData()[3]);
 				System.out.println("Error message: " + new String(p.getData(),4,(len-4)));
 			}
 			System.out.println();

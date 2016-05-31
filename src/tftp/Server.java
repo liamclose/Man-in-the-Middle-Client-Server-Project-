@@ -43,7 +43,6 @@ public class Server extends Stoppable{
 		}
 		try {
 			sendSocket = new DatagramSocket();
-			Message.printOutgoing(sendPacket, "Server", verbose);
 		} catch (SocketException e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -54,7 +53,7 @@ public class Server extends Stoppable{
 		BufferedInputStream in;
 		try {
 			in = new BufferedInputStream(new FileInputStream ("server/".concat(filename)));
-			
+			Message.printOutgoing(sendPacket, "Server", verbose);
 			super.read(in, sendSocket, receivePacket.getPort());
 		} catch (FileNotFoundException e) {
 			
@@ -65,11 +64,20 @@ public class Server extends Stoppable{
 			errorBytes[2] = 0;
 			errorBytes[3] = 1;
 			System.arraycopy(filename.getBytes(), 0, errorBytes, 4, filename.length());
-			
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e2) {
+				// TODO Auto-generated catch block
+				e2.printStackTrace();
+			}
 			try {
 				sendPacket = new DatagramPacket(errorBytes,errorBytes.length,InetAddress.getLocalHost(),receivePacket.getPort());
+				sendSocket.send(sendPacket);
 				Message.printOutgoing(sendPacket, "Error", verbose);
 			} catch (UnknownHostException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
@@ -85,7 +93,20 @@ public class Server extends Stoppable{
 			out = new BufferedOutputStream(new FileOutputStream(filename));
 			sendSocket.send(sendPacket);
 			super.write(out, sendSocket);
-		} catch (IOException e) {
+		} catch (FileNotFoundException e) {
+			try {
+				DatagramPacket errorPacket = super.createErrorPacket("Access denied on: " + filename, 2, receivePacket.getPort());
+				sendSocket.send(errorPacket);
+				Message.printOutgoing(errorPacket, "Error", verbose);
+			} catch (UnknownHostException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
+		catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
