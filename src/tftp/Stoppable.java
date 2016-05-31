@@ -111,6 +111,7 @@ public class Stoppable extends Thread {
 					if (expected==actual) {
 						try {
 							out.write(data,4,receivePacket.getLength()-4);
+							System.out.println("wy");
 						} catch (IOException e) {
 							DatagramPacket errorPacket = createErrorPacket("Disk full.",3,receivePacket.getPort());
 							sendReceiveSocket.send(errorPacket);

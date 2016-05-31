@@ -134,7 +134,7 @@ public class Client extends Stoppable{
 				}
 			}
 			else if (opcode==READ) {
-				
+
 				try {
 					System.out.println("Creating file output.");
 					BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(filename));
@@ -146,21 +146,38 @@ public class Client extends Stoppable{
 					}
 					write(out,sendReceiveSocket);
 					out.close();
-				} catch (IOException e) { //differentiate between access denied and too much data? and file not found
-					if (e.getMessage().equals("There is not enough space on the disk")) {
-						System.out.println("l");
+				} catch (IOException e) {
+					if (e.getMessage().equals("There is not enough space on the disk")||e.getMessage().equals("Stream Closed")) {
 					} 
 					else if (e.getMessage().equals(filename + " (Access is denied)")) {
-						System.out.println("ugh");
-						if(sc.hasNext()) {
-							filename = sc.next();
+						System.out.println("Access denied: " + filename + "\nPlease enter a new file.");
+						waiting = true;
+						synchronized (this) {
+							try {
+								wait();
+							} catch (InterruptedException e1) {
+								e1.printStackTrace();
+							}
 						}
+						waiting = false;
 						sendAndReceive(READ);
 					}
 					else {
+						e.printStackTrace();
 						System.out.println(e.getMessage());
+						try {
+							sendPacket = createErrorPacket(e.getMessage(),0,super.receivePacket.getPort());
+						} catch (UnknownHostException e1) {
+							e1.printStackTrace();
+						}
+						try {
+							sendReceiveSocket.send(sendPacket);
+							Message.printOutgoing(super.sendPacket, "ERROR", verbose);
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
 					}
-					
+
 				}
 			}
 		}
@@ -170,54 +187,50 @@ public class Client extends Stoppable{
 	public static void main(String args[]) {
 		Client c = new Client();
 		String x;
-		//while (!c.shutdown) {
-			System.out.println("(R)ead, (w)rite, toggle (v)erbose, toggle (t)est, or (q)uit?");
-			System.out.println("Default options are verbose mode on, test mode off.");
-			while(c.sc.hasNext()) { //TODO loop for invalid file (both r/w?) slash just loop in general
-				x = c.sc.next();
-				if (x.contains("R")||x.contains("r")) {
-					System.out.println("Please enter a filename.");
-					c.filename = c.sc.next();
-					c.sc.reset();
-					new Message(c,c.sc).start();
-					c.sc.reset();
-					c.sendAndReceive(READ);
-					System.exit(0);
-				}
-				else if (x.contains("w")||x.contains("W")) {
-					System.out.println("Please enter a filename.");
-					c.filename = c.sc.next();
-					c.sc.reset();
-					new Message(c,c.sc).start();
-					c.sc.reset();
-					c.sendAndReceive(WRITE);
-					System.exit(0);
-				}
-				else if (x.contains("v")||x.contains("V")) {
-					c.verbose = !c.verbose;
-					System.out.println("Verbose = " + c.verbose);
-				}
-				else if (x.contains("t")||x.contains("T")) {
-					if (c.serverPort==23) {
-						c.serverPort = 69;
-						System.out.println("Test mode off.");
-					}
-					else {
-						c.serverPort = 23;
-						System.out.println("Test mode on.");
-					}
-				}
-				else if (x.contains("q")||x.contains("Q")) {
-					c.sendReceiveSocket.close();
-					System.exit(0);
+		System.out.println("(R)ead, (w)rite, toggle (v)erbose, toggle (t)est, or (q)uit?");
+		System.out.println("Default options are verbose mode on, test mode off.");
+		while(c.sc.hasNext()) { //TODO loop for multiple requests, it5
+			x = c.sc.next();
+			if (x.contains("R")||x.contains("r")) {
+				System.out.println("Please enter a filename.");
+				c.filename = c.sc.next();
+				c.sc.reset();
+				new Message(c,c.sc).start();
+				c.sc.reset();
+				c.sendAndReceive(READ);
+				System.exit(0);
+			}
+			else if (x.contains("w")||x.contains("W")) {
+				System.out.println("Please enter a filename.");
+				c.filename = c.sc.next();
+				c.sc.reset();
+				new Message(c,c.sc).start();
+				c.sc.reset();
+				c.sendAndReceive(WRITE);
+				System.exit(0);
+			}
+			else if (x.contains("v")||x.contains("V")) {
+				c.verbose = !c.verbose;
+				System.out.println("Verbose = " + c.verbose);
+			}
+			else if (x.contains("t")||x.contains("T")) {
+				if (c.serverPort==23) {
+					c.serverPort = 69;
+					System.out.println("Test mode off.");
 				}
 				else {
-					c.sc.reset(); //clear scanner
+					c.serverPort = 23;
+					System.out.println("Test mode on.");
 				}
 			}
-			c.sc.close();
-		//}
-
-//		/sc.close();
+			else if (x.contains("q")||x.contains("Q")) {
+				c.sendReceiveSocket.close();
+				System.exit(0);
+			}
+			else {
+				c.sc.reset(); //clear scanner
+			}
+		}
+		c.sc.close();
 	}
 }
