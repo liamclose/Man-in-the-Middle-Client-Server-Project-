@@ -62,12 +62,14 @@ public class Stoppable extends Thread {
 							sendPacket = createErrorPacket("Malformed Packet.",4,receivePacket.getPort());
 							sendReceiveSocket.send(sendPacket);
 							Message.printOutgoing(sendPacket, "Error - invalid", verbose);
+							System.out.println("\n\n Exiting transfer.");
 							return;
 						}
 					} catch (SocketTimeoutException e) {
 						timeout = true;
 						timeoutCounter++;
 						if (shutdown||timeoutCounter==10) {
+							System.out.println("\n\n Exiting transfer.");
 							return;
 						}
 						System.out.println("Timed out. Continuing to wait.");
@@ -76,6 +78,7 @@ public class Stoppable extends Thread {
 						try {
 							sendReceiveSocket.send(sendPacket);
 							Message.printOutgoing(sendPacket, "Error - caught", verbose);
+							System.out.println("\n\n Exiting transfer.");
 							return;
 						} catch (IOException e1) {
 							// TODO Auto-generated catch block
@@ -93,11 +96,13 @@ public class Stoppable extends Thread {
 					Message.printIncoming(receivePacket, "ERROR3", verbose);
 					sendPacket = createErrorPacket("Unexpected opcode received.",4,receivePacket.getPort());
 					sendReceiveSocket.send(sendPacket);
+					System.out.println("\n\n Exiting transfer.");
 					return;
 				}
 				else {
 					if (data[1]==5) {
 						Message.printIncoming(receivePacket, "Error4", verbose);
+						System.out.println("\n\n Exiting transfer.");
 						return;
 
 					}
@@ -106,16 +111,17 @@ public class Stoppable extends Thread {
 						sendPacket = createErrorPacket("Unexpected block received.",4,port);
 						sendReceiveSocket.send(sendPacket);
 						Message.printOutgoing(sendPacket, "Error", verbose);
+						System.out.println("\n\n Exiting transfer.");
 						return;
 					}
 					if (expected==actual) {
 						try {
 							out.write(data,4,receivePacket.getLength()-4);
-							System.out.println("wy");
 						} catch (IOException e) {
 							DatagramPacket errorPacket = createErrorPacket("Disk full.",3,receivePacket.getPort());
 							sendReceiveSocket.send(errorPacket);
 							Message.printOutgoing(errorPacket, "ERROR", verbose);
+							System.out.println("\n\n Exiting transfer.");
 							return;
 						}
 						expected++;
@@ -142,6 +148,7 @@ public class Stoppable extends Thread {
 				DatagramPacket errorPacket = createErrorPacket("Disk full.",3,receivePacket.getPort());
 				sendReceiveSocket.send(errorPacket);
 				Message.printOutgoing(errorPacket, "ERROR", verbose);
+				System.out.println("\n\n Exiting transfer.");
 				return;
 				
 			}
@@ -215,10 +222,12 @@ public class Stoppable extends Thread {
 							sendPacket = createErrorPacket("Malformed Packet.",4,receivePacket.getPort());
 							sendReceiveSocket.send(sendPacket);
 							Message.printOutgoing(sendPacket, "Error", verbose);
+							System.out.println("\n\n Exiting transfer.");
 							return;
 						}
 						else if (receivePacket.getData()[1]==5) {
 							Message.printIncoming(receivePacket,"ERROR",verbose);
+							System.out.println("\n\n Exiting transfer.");
 							return;
 						}
 						else if (receivePacket.getData()[1]!=4) {
@@ -226,6 +235,7 @@ public class Stoppable extends Thread {
 							sendPacket = createErrorPacket("Unexpected opcode.",4,receivePacket.getPort());
 							sendReceiveSocket.send(sendPacket);
 							Message.printOutgoing(sendPacket, "Error", verbose);
+							System.out.println("\n\n Exiting transfer.");
 							return;
 						}
 						else if (Message.parseBlock(receivePacket.getData())>Message.parseBlock(sendPacket.getData())&&!wrapped) {
@@ -233,6 +243,7 @@ public class Stoppable extends Thread {
 							sendPacket = createErrorPacket("Invalid block number.",4,receivePacket.getPort());
 							sendReceiveSocket.send(sendPacket);
 							Message.printOutgoing(sendPacket, "Error", verbose);
+							System.out.println("\n\n Exiting transfer.");
 							return;
 						}
 						else {
@@ -253,11 +264,13 @@ public class Stoppable extends Thread {
 						sendPacket = createErrorPacket(e.getMessage(),4,receivePacket.getPort());
 						sendReceiveSocket.send(sendPacket);
 						Message.printOutgoing(sendPacket, "Error", verbose);
+						System.out.println("\n\n Exiting transfer.");
 						return;
 					}
 				}
+				timeoutCounter = 0;
 				//look into this...
-				while ((Message.parseBlock(sendPacket.getData())<Message.parseBlock(receivePacket.getData()))||timeout) { //fuck? no retransmit here?
+				while ((Message.parseBlock(sendPacket.getData())<Message.parseBlock(receivePacket.getData()))||timeout) { 
 					try {
 						sendReceiveSocket.receive(receivePacket);
 						Message.printIncoming(receivePacket,"Final packet",verbose);
@@ -265,6 +278,11 @@ public class Stoppable extends Thread {
 					}
 					catch (SocketTimeoutException e) {
 						timeout = true;
+						timeoutCounter++;
+						if (timeoutCounter==10) {
+							System.out.println("\n\n Exiting transfer.");
+							return;
+						}
 					}
 				}
 
@@ -292,6 +310,7 @@ public class Stoppable extends Thread {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
+			System.out.println("\n\n Exiting transfer.");
 			System.exit(1);
 		}
 		System.out.println("Transfer Complete");
