@@ -11,6 +11,8 @@ public class Stoppable extends Thread {
 	String filename;
 	boolean verbose = true;
 	boolean waiting = false;
+	boolean menu = false;
+	InetAddress ip;
 
 	public void setShutdown() {
 		shutdown = true;
@@ -26,7 +28,7 @@ public class Stoppable extends Thread {
 		errorBytes[2] = 0;
 		errorBytes[3] = (byte) errorCode;
 		errorBytes[errorBytes.length-1] = 0;
-		return new DatagramPacket(errorBytes,errorBytes.length,InetAddress.getLocalHost(),port);
+		return new DatagramPacket(errorBytes,errorBytes.length,ip,port);
 	}
 	
 	public boolean waiting() {
@@ -194,7 +196,7 @@ public class Stoppable extends Thread {
 				for (int i = 0;i<n;i++) {
 					message[i+4] = data[i];
 				}
-				sendPacket = new DatagramPacket(message,n+4,InetAddress.getLocalHost(),port);
+				sendPacket = new DatagramPacket(message,n+4,ip,port);
 				Message.printOutgoing(sendPacket, "Read", verbose);
 				while (timeout||wrongPort) {
 					if (!wrongPort) {
@@ -295,7 +297,7 @@ public class Stoppable extends Thread {
 				resp[1] = 3;
 				resp[2] = block1;
 				resp[3] = block2;
-				sendPacket = new DatagramPacket(resp,4,InetAddress.getLocalHost(),port);
+				sendPacket = new DatagramPacket(resp,4,ip,port);
 				sendReceiveSocket.send(sendPacket);
 				Message.printOutgoing(sendPacket, "Read", verbose);
 				while ((Message.parseBlock(sendPacket.getData())!=Message.parseBlock(receivePacket.getData()))||timeout) {

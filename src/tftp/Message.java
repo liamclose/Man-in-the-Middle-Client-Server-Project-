@@ -2,8 +2,10 @@ package tftp;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.regex.Pattern;
+
 
 
 
@@ -25,6 +27,11 @@ public class Message extends Thread{
 		this.s = s;
 	}
 	
+	public static void main(String[] args) {
+		ArrayList<Object> l = new ArrayList<Object>();
+		l.get(3);
+	}
+
 	public void run() {
 		if (inter) {
 			try {
@@ -36,29 +43,34 @@ public class Message extends Thread{
 		}
 		else {
 			while (true) {
-				if (sc.hasNext()) {
-					String x = sc.next();
-					if (s.waiting()) {
-						s.filename = x;
-						synchronized(s) {
-							s.notify();
+				if (!s.menu) {
+					if (sc.hasNext()) {
+						String x = sc.next();
+						if (s.waiting()) {
+							s.filename = x;
+							synchronized(s) {
+								s.notify();
+							}
 						}
-					}
-					else if (x.equals("q")||x.equals("Q")){
-						s.setShutdown();
-						return;
-					}
-					else if (x.equals("v")||x.equals("V")) {
-						if (s.verbose) {
-							System.out.println("Verbose mode turned off.");
+						//else if (x.equals("r")||x.equals("R")){
+					//		s.menu = true;
+					//	}
+						else if (x.equals("q")||x.equals("Q")){
+							s.setShutdown();
+							return;
+						}
+						else if (x.equals("v")||x.equals("V")) {
+							if (s.verbose) {
+								System.out.println("Verbose mode turned off.");
+							}
+							else {
+								System.out.println("Verbose mode turned on.");
+							}
+							s.verbose = !s.verbose;
 						}
 						else {
-							System.out.println("Verbose mode turned on.");
+							sc.reset();
 						}
-						s.verbose = !s.verbose;
-					}
-					else {
-						sc.reset();
 					}
 				}
 			}
