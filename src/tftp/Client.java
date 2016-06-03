@@ -77,7 +77,6 @@ public class Client extends Stoppable{
 								System.exit(0);
 							}
 							System.out.println("Timed out, retransmitting.  ");
-							Message.printOutgoing(super.sendPacket,"Retransmit:",verbose);
 						} catch (MalformedPacketException e) {
 							Message.printIncoming(super.receivePacket, "ERROR", verbose);
 							super.sendPacket = createErrorPacket(e.getMessage(),4,super.receivePacket.getPort());
@@ -186,17 +185,18 @@ public class Client extends Stoppable{
 		}
 		return b;
 	}
-	
+	//client broken for quitting mid transfer
 	public static void main(String args[]) {
 		Client c = new Client();
 		String x;
+		byte[] address = null;
 		System.out.println("Is the server running on this computer? Y/N");
 		if (c.sc.hasNext()) {
 			x = c.sc.next();
 			if (x.contains("y")||x.contains("Y")) {
 				System.out.println("Please enter the server IP address.");
 				x = c.sc.next();
-				byte[] address = getIP(x);
+				address = getIP(x);
 				try {
 					c.ip = InetAddress.getByAddress(address);
 				} catch (UnknownHostException e) {
@@ -237,10 +237,21 @@ public class Client extends Stoppable{
 				else if (x.contains("t")||x.contains("T")) {
 					if (c.serverPort==23) {
 						c.serverPort = 69;
+						
 						System.out.println("Test mode off.");
 					}
 					else {
 						c.serverPort = 23;
+						try {
+							DatagramPacket d = new DatagramPacket(address,4,InetAddress.getLocalHost(),23);
+							c.sendReceiveSocket.send(d);
+							c.ip = InetAddress.getLocalHost();
+						} catch (UnknownHostException e) {
+							e.printStackTrace();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 						System.out.println("Test mode on.");
 					}
 				}

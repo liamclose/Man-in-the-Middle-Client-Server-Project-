@@ -73,7 +73,7 @@ public class Server extends Stoppable{
 				e2.printStackTrace();
 			}
 			try {
-				sendPacket = new DatagramPacket(errorBytes,errorBytes.length,InetAddress.getLocalHost(),receivePacket.getPort());
+				sendPacket = new DatagramPacket(errorBytes,errorBytes.length,ip,receivePacket.getPort());
 				sendSocket.send(sendPacket);
 				Message.printOutgoing(sendPacket, "Error", verbose);
 			} catch (UnknownHostException e1) {

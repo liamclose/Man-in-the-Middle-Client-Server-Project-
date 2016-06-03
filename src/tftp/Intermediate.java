@@ -8,7 +8,7 @@ public class Intermediate extends Stoppable{
 	DatagramPacket sendPacket, receivePacket, delayPacket;
 	DatagramSocket serverSideSocket, receiveSocket, replySocket,delaySocket;
 	int replyPort, serverPort;
-	InetAddress replyAddress;
+	static InetAddress clientAddress, serverAddress;
 
 	static String packetType = "", errorType = "", packetError = "";
 	static int packetNumber = 0, time=0;
@@ -27,13 +27,21 @@ public class Intermediate extends Stoppable{
 		this.verbose = verbose;
 		filename = Message.parseFilename(new String(received.getData(),0,received.getLength()));
 		receivePacket = received;
+		System.out.println(received.getData());
+		System.out.println(this + "   123 " + receivePacket.getData());
 		try {
 			serverSideSocket = new DatagramSocket();
 			replySocket = new DatagramSocket();
 			replyPort = clientPort; 
 			serverPort = received.getPort();
-			replyAddress = received.getAddress();
-			receivePacket = received;
+			try {
+				clientAddress = InetAddress.getLocalHost();
+			} catch (UnknownHostException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			System.out.println(this + "end of constructor");
+			System.out.println(this + "  " +  receivePacket.getData());
 		} catch (SocketException e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -42,15 +50,21 @@ public class Intermediate extends Stoppable{
 
 	public void run() {		
 		//server side printing on receive
+		System.out.println(this + "run start "  + serverAddress.getHostAddress());
 		try {
+			System.out.println(serverAddress.getHostAddress());
 			byte tempData[] = new byte[516];
-			tempData = receivePacket.getData();						
-			sendPacket = new DatagramPacket(tempData, receivePacket.getLength(),InetAddress.getLocalHost(),69);
+			System.out.println(this + "  " + (receivePacket==null));
+			tempData = receivePacket.getData();	
+			System.out.println(serverAddress.getHostAddress());
+			sendPacket = new DatagramPacket(tempData, receivePacket.getLength(), serverAddress,69);
+			System.out.println("how");
 			readWriteError();
 			int x = 0;			
 			int timeoutCount = 0;
 			timeout = false;
 			while(true) { //loop forever
+				System.out.println("forever loop");
 				if (timeoutCount ==5) {
 					return;
 				}
@@ -64,7 +78,7 @@ public class Intermediate extends Stoppable{
 					serverSideSocket.receive(receivePacket); //receive from server
 					timeout = false;
 					Message.printIncoming(receivePacket, "Intermediate Host - ServerSide",verbose);
-					sendPacket = new DatagramPacket(receivePacket.getData(),receivePacket.getLength(),InetAddress.getLocalHost(),replyPort); 
+					sendPacket = new DatagramPacket(receivePacket.getData(),receivePacket.getLength(),clientAddress,replyPort); 
 				} catch (SocketTimeoutException e) {
 					timeoutCount++;
 					timeout = true;
@@ -81,7 +95,7 @@ public class Intermediate extends Stoppable{
 					replySocket.receive(receivePacket); //receive from client
 					timeout = false;
 					Message.printIncoming(receivePacket, "Intermediate Host - ClientSide",verbose);
-					sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),InetAddress.getLocalHost(),serverPort);
+					sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),serverAddress,serverPort);
 				} catch (SocketTimeoutException e) {
 					timeout = true;
 				}
@@ -149,6 +163,7 @@ public class Intermediate extends Stoppable{
 
 
 	private void readWriteError(){
+		System.out.println("???");
 		boolean specialRequest = false;
 		if(packetType.toUpperCase().equals("RRQ")||packetType.toUpperCase().equals("WRQ"))
 		{				
@@ -171,6 +186,7 @@ public class Intermediate extends Stoppable{
 		}
 
 		if(!errorType.toUpperCase().contains("LOSE")&&!errorType.toUpperCase().contains("DELAY")){
+			System.out.println("didn't lose");
 			try {
 				serverSideSocket.send(sendPacket);
 			} catch (IOException e) {
@@ -309,11 +325,7 @@ public class Intermediate extends Stoppable{
 			sendPacket.setData(data);
 		}
 		else if(packetError.toUpperCase().contains("NO TERMINATOR")){
-			try {
-				sendPacket = new DatagramPacket(data, receivePacket.getLength()-1,InetAddress.getLocalHost(),sendPacket.getPort());
-			} catch (UnknownHostException e) {
-				e.printStackTrace();
-			}
+				sendPacket = new DatagramPacket(data, receivePacket.getLength()-1,sendPacket.getAddress(),sendPacket.getPort());
 		}
 		else if(packetError.toUpperCase().contains("INVALID ERROR CODE")){
 				data[3] = 9;
@@ -329,11 +341,7 @@ public class Intermediate extends Stoppable{
 			sendPacket.setData(data);
 		}
 		else if(packetError.toUpperCase().contains("TOO LONG")){
-			try {
-				sendPacket = new DatagramPacket(data, receivePacket.getLength()+10,InetAddress.getLocalHost(),sendPacket.getPort());
-			} catch (UnknownHostException e) {
-				e.printStackTrace();
-			}
+				sendPacket = new DatagramPacket(data, receivePacket.getLength()+10,sendPacket.getAddress(),sendPacket.getPort());
 		}
 	}
 
@@ -343,10 +351,27 @@ public class Intermediate extends Stoppable{
 	 * reply port to continue forwarding messages
 	 */
 	public void forward() {
+		byte[] data = new byte[516];
+		receivePacket = new DatagramPacket(data, data.length);
+		try {
+			receiveSocket.receive(receivePacket);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		try {
+			byte[] address = new byte[4];
+			System.arraycopy(receivePacket.getData(), 0, address, 0, 4);
+			System.out.println(address[0] + "  " +address[1] + "  " +address[2] + "  " +address[3]);
+			serverAddress = InetAddress.getByAddress(address);
+		} catch (UnknownHostException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		while (!shutdown) { //loop forever-ish
-			byte data[] = new byte[516];
+			data = new byte[516];
 			receivePacket = new DatagramPacket(data, data.length);
-
+			System.out.println(this + "main");
 			try {
 				receiveSocket.receive(receivePacket);
 			} catch (IOException e) {
@@ -355,7 +380,7 @@ public class Intermediate extends Stoppable{
 			}
 			Message.printIncoming(receivePacket, "Intermediate Host",verbose);
 			replyPort = receivePacket.getPort();	
-
+			System.out.println(this + "later in main");
 			new Intermediate(receivePacket, verbose, replyPort).start();
 
 		}
@@ -365,7 +390,7 @@ public class Intermediate extends Stoppable{
 		Intermediate i = new Intermediate();		
 		String x;	
 		//make this loop ideally
-		while(true) {
+		//while(true) {
 			Scanner sc = new Scanner(System.in);
 			System.out.println("What type of error would you like to simulate? \n (n)etwork error or (p)acket error or (no)ne?");
 			if(sc.hasNext()) {
@@ -614,7 +639,7 @@ public class Intermediate extends Stoppable{
 				else {
 					sc.reset(); //clear scanner
 				}
-			}
+			//}
 
 			sc.close();		
 			i.forward();
