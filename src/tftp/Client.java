@@ -6,7 +6,6 @@ import java.util.Scanner;
 
 public class Client extends Stoppable{
 
-	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendReceiveSocket;
 	Scanner sc;
 
