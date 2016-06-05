@@ -12,7 +12,7 @@ public class Server extends Stoppable{
 	public static final byte[] dataOne = {0, 3, 0, 1};
 	public static final byte[] ackZero = {0, 4, 0, 0};
 	boolean readTransfer;
-	private static ArrayList<String> filesInProgress;
+	
 
 	public Server() {
 		try {
@@ -138,9 +138,9 @@ public class Server extends Stoppable{
 		else {
 			read();
 		}
-		sendSocket.close();
-		System.out.println(filesInProgress);
+		sendSocket.close();		
 		filesInProgress.remove(filename);
+		System.out.println(filesInProgress);
 	}
 	/*
 	 * waits for a new client connection and creates a new thread to deal with it
