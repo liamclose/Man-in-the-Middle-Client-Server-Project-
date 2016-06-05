@@ -1,12 +1,23 @@
 package tftp;
 
-import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
 
 
+/*TODO
+ * ITERATION 3
+Invalid filename?????????????
+Too long?????????????????????????????
+
+ITERATION 4
+Concurrent access
+
+ELSE
+Relative paths?
+ */
 
 public class Message extends Thread{
 	Scanner sc;
@@ -24,29 +35,12 @@ public class Message extends Thread{
 		inter = true;
 		this.s = s;
 	}
-
-	public static void main(String[] args) {
-		try {
-		DatagramSocket a = new DatagramSocket();
-		DatagramSocket b = new DatagramSocket(3000);
-		byte[] c = {1,2,3,4,5};
-		DatagramPacket d = new DatagramPacket(c,5,InetAddress.getLocalHost(),3000);
-		DatagramPacket e = new DatagramPacket(c,3);
-		a.send(d);
-		b.receive(e);
-		System.out.println(e.getLength());
-		a.close();
-		b.close();
-		BufferedInputStream in = new BufferedInputStream(new FileInputStream("one.txt"));
-		BufferedOutputStream in2 = new BufferedOutputStream(new FileOutputStream("one.txt"));
-		in.read(c);
-		in2.write(c);
-		}
-		catch (Exception e) {
-			System.out.print(e);
-		}
-	}
 	
+	public static void main(String[] args) {
+		ArrayList<Object> l = new ArrayList<Object>();
+		l.get(3);
+	}
+
 	public void run() {
 		if (inter) {
 			try {
@@ -58,29 +52,34 @@ public class Message extends Thread{
 		}
 		else {
 			while (true) {
-				if (sc.hasNext()) {
-					String x = sc.next();
-					if (s.waiting()) {
-						s.filename = x;
-						synchronized(s) {
-							s.notify();
+				if (!s.menu) {
+					if (sc.hasNext()) {
+						String x = sc.next();
+						if (s.waiting()) {
+							s.filename = x;
+							synchronized(s) {
+								s.notify();
+							}
 						}
-					}
-					else if (x.equals("q")||x.equals("Q")){
-						s.setShutdown();
-						return;
-					}
-					else if (x.equals("v")||x.equals("V")) {
-						if (s.verbose) {
-							System.out.println("Verbose mode turned off.");
+						//else if (x.equals("r")||x.equals("R")){
+					//		s.menu = true;
+					//	}
+						else if (x.equals("q")||x.equals("Q")){
+							s.setShutdown();
+							return;
+						}
+						else if (x.equals("v")||x.equals("V")) {
+							if (s.verbose) {
+								System.out.println("Verbose mode turned off.");
+							}
+							else {
+								System.out.println("Verbose mode turned on.");
+							}
+							s.verbose = !s.verbose;
 						}
 						else {
-							System.out.println("Verbose mode turned on.");
+							sc.reset();
 						}
-						s.verbose = !s.verbose;
-					}
-					else {
-						sc.reset();
 					}
 				}
 			}
