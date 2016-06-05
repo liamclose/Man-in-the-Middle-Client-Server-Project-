@@ -52,8 +52,9 @@ public class Message extends Thread{
 		}
 		else {
 			while (true) {
-				if (!s.menu) {
+				
 					if (sc.hasNext()) {
+						if (!s.menu) {
 						String x = sc.next();
 						if (s.waiting()) {
 							s.filename = x;
@@ -81,14 +82,17 @@ public class Message extends Thread{
 						//	sc.reset();
 						//}
 					}
-				}
+				
 				else {
+					System.out.println("???");
 					synchronized(s) {
-						s.menu();
+						System.out.println("Starting menu");
+						 ((Client)s).menu(sc.next());
 						System.out.println("done with the menu " + s.filename + ((Client) s).opcode);
 						s.notify();
 					}
 				}
+					}
 			}
 		}
 	}

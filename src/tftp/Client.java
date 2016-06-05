@@ -52,6 +52,7 @@ public class Client extends Stoppable{
 		}
 		if (!shutdown) {
 			// Process the received datagram.
+			//recursive print
 			if (opcode==WRITE) {
 				try {
 					byte[] resp = new byte[500];
@@ -211,13 +212,16 @@ public class Client extends Stoppable{
 		return ret;
 	}
 
-	public void menu() {
-		String x;			
-		sc.reset();
-		System.out.println(y);
-		if(sc.hasNext()) {
-			x = sc.next();
-			System.out.println(x);
+	public void menu(String x) {
+		System.out.println(x + menu);
+		while(menu || sc.hasNext()) {
+			if (menu) {
+				menu = false;
+			}
+			else {
+				x = sc.next();
+				System.out.println("nope");
+			}
 			if (x.contains("R")||x.contains("r")) {
 				opcode = READ;
 				System.out.println("Please enter a filename.");
@@ -271,7 +275,7 @@ public class Client extends Stoppable{
 			}
 
 		}
-		menu = false;
+		
 	}
 	//client broken for quitting mid transfer
 	public static void main(String args[]) {
@@ -302,8 +306,9 @@ public class Client extends Stoppable{
 		c.menu = true;
 		new Message(c,c.sc).start();
 		while (!c.shutdown) {
+			c.menu = true;
 			synchronized(c) {
-				c.menu = true;
+				
 				try {
 					c.wait();
 				} catch (InterruptedException e) {
