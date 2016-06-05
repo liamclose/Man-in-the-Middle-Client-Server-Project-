@@ -125,7 +125,7 @@ public class Client extends Stoppable{
 				}
 			}
 			else if (opcode==READ) {
-
+				//resend on read?
 				try {
 					System.out.println("Creating file output.");
 					BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(filename));
@@ -213,6 +213,14 @@ public class Client extends Stoppable{
 				c.ip = getIP(c,x);
 					c.serverIP = c.ip;
 				System.out.println(x);
+			}
+			else {
+				try {
+					c.ip = InetAddress.getLocalHost();
+				} catch (UnknownHostException e) {
+					e.printStackTrace();
+				}
+				c.serverIP = c.ip;
 			}
 
 		}
