@@ -15,8 +15,11 @@ Steps to run the project:
 2. Open intermediate.java, hit run. Follow Console prompts to simulate errors.
 3. Open Client.java, hit run.
 4. Follow Prompts in console.
+	i.	 If the server is on another computer enter "n" else enter "y"
+			1. If no is selected enter the IP address of the server in the format X.X.X.X where x can be 1-3 digits long ex. 125.733.6.56
+			2. If you do not know the IP address of the server go onto the server computer and Google "get my ip". It will be the first result
 	i.   Choose (t)est to turn on test mode. 
-	ii.  Choose (v)erbose mode to turn off verbose mode if you don't want detailed print statments about received and sent data packets.
+	ii.  Choose (v)erbose mode to turn off verbose mode if you don't want detailed print statements about received and sent data packets.
 	iii. Choose (r)ead or (w)rite.
 5. Enter file name to start transfer.
  
@@ -32,22 +35,19 @@ File explanation:
  
 TEST INSTRUCTIONS
 Errors simulated can be tested using the intermediate menu.
+See above for instructions on how to test on multiple computers. (Client Menu)
 I/O errors can be simulated using incorrect filenames, changing the permissions on a file, or having the project run on a disk that is partially/completely full.
-The Client needs to be restarted for every new file being transferred. It saves files in the topmost folder of the project.
+The Client saves files in the topmost folder of the project.
 The intermediate must be restarted for every error to be simulated. If not restarted it will only simulate one error.
+
 
 The server will save the file with the filename provided to the client in the server folder (server/FILENAME).
 Other pathways for both client and server will be handled as part of iteration 5.
-To test corupted error packets use the intermediates menu to choose corrupt/unknown source for an error packet then run with an I/O error.
+To test corrupted error packets use the intermediates menu to choose corrupt/unknown source for an error packet then run with an I/O error.
 
-New errors added to the intermediate in this iteration were the packet errors described below:
+New errors added to the intermediate in this iteration was the packet error described below:
 1. corrupted error packet
-	i. invalid opcode- changes the opcode to an opcode that is not 1,2,3,4,5
-	ii. invalid error code- changes the error code to an error code that is not 1,2,3,4,5,6
-	iii. no null terminator- removes the null terminator from a Error Message
-
-2.unknown source packet- sends a Error packet from an unknown source (port)
-
+	i. invalid filename- changes the filename of a RRQ or WRQ to "".
 
 *packet errors directly deal with the packet itself whereas network errors deal with sending/not sending the packets and do not manipulate the data within the packets.
 
@@ -59,20 +59,21 @@ To test the program you can run to read or write with all different size of file
 3. exact.txt is a file with exactly 512 bytes
 4. empty.txt is an empty file.
  
-
-
 Once you run with a certain file you can find the copied file in server/FILENAME
 
 NOTES:
-The timing diagrams for Iteration 3 are unchanged, we didn't have time to edit them for this iteration. They will be updated for iteration 5.
-The new diagrams are in the Iteration 4 Diagrams folder.
+All final diagrams are in the Iteration 5 Diagrams folder.
 
-As a team we decided to overwrite a file if it already exists for both the client and server. So we do not send error code 6.
-We also decided that it was useful to leave failed file transfers for testing purposes.
+TEAM DECISIONS:
+As a team we decided:
+	1. To overwrite a file if it already exists for both the client and server. Therefore we do not send error code 6.
+	2. It was useful to leave failed file transfers. We did this for testing purposes (to see in the file what happened ex. empty, half full etc.).
+	3. To have the client and the intermediate run on the same machine whether the server is on the same machine or not.
+	   We did this to be able to have multiple intermediate running (to choose different error situations) and to decrease
+	   the amount of multi-threading.
 
 RESPONSIBILITY BREAKDOWN
 
-
-Liam - Updated the error simulator to simulate both corupted error packets and error packets sent from an unknown source, testing, and updated the read me.
+Liam - Updated the error simulator to simulate corrupted RRQ and WRQ with invalid filename, help with other code, testing, and updated the read me.
 Pallavi - Updated UML diagrams, helped with the read me, drew the timing diagrams and helped with the code
-Megan - edited the server and client to handle the simulated errors and I/O errors, testing, and helped with the timing diagrams
+Megan - edited the server and client to handle the simulated errors and I/O errors, added code to handle server on another computer, testing, and helped with the timing diagrams

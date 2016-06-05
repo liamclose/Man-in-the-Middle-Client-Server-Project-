@@ -319,6 +319,15 @@ public class Intermediate extends Stoppable{
 			data[data.length-2] = 'x';
 			sendPacket.setData(data);
 		}
+		else if(packetError.toUpperCase().contains("INVALID FILENAME")){
+			if(packetType.contains("RRQ")){
+				data = Message.formatRequest("","octet", 1);
+			}
+			else if(packetType.contains("WRQ")){
+				data = Message.formatRequest("","octet", 2);
+			}			
+			sendPacket.setData(data);
+		}
 		else if(packetError.toUpperCase().contains("BLOCK NUMBER TOO HIGH")){			
 			data[2] = Message.toBlock(Message.parseBlock(receivePacket.getData()) + 10)[0];
 			data[3] = Message.toBlock(Message.parseBlock(receivePacket.getData()) + 10)[1];
@@ -465,12 +474,11 @@ public class Intermediate extends Stoppable{
 						}
 						else if(packetType.contains("W")||packetType.contains("w")){
 							packetType = "WRQ";
-							System.out.println("How would you like to Corrupt the WRQ? \n (i)nvalid opcode or (in)valid mode or (n)o null terminator or (u)nexpected opcode");
+							System.out.println("How would you like to Corrupt the WRQ? \n (i)nvalid opcode or (in)valid mode or (n)o null terminator or (u)nexpected opcode or invalid (f)ilename");
 							x = sc.next();
 							if(x.contains("in")||x.contains("IN")||x.contains("In")||x.contains("iN")){
 								packetError = "Invalid Mode";
 							}
-
 							else if(x.contains("n")||x.contains("N")){
 								packetError = "No Terminator";
 							}
@@ -479,6 +487,9 @@ public class Intermediate extends Stoppable{
 							}
 							else if(x.contains("u")||x.contains("U")){
 								packetError = "Unexpected Opcode";
+							}
+							else if(x.contains("f")||x.contains("F")){
+								packetError = "Invalid Filename";
 							}
 							else{
 								sc.reset(); //clear scanner
@@ -487,12 +498,11 @@ public class Intermediate extends Stoppable{
 						}
 						else if(packetType.contains("R")||packetType.contains("r")){
 							packetType = "RRQ";
-							System.out.println("How would you like to Corrupt the RRQ? \n (i)nvalid opcode or (in)valid mode or (n)o null terminator or (u)nexpected opcode");
+							System.out.println("How would you like to Corrupt the RRQ? \n (i)nvalid opcode or (in)valid mode or (n)o null terminator or (u)nexpected opcode or invalid (f)ilename");
 							x = sc.next();
 							if(x.contains("in")||x.contains("IN")||x.contains("In")||x.contains("iN")){
 								packetError = "Invalid Mode";
 							}
-
 							else if(x.contains("n")||x.contains("N")){
 								packetError = "No Terminator";
 							}
@@ -501,6 +511,9 @@ public class Intermediate extends Stoppable{
 							}
 							else if(x.contains("u")||x.contains("U")){
 								packetError = "Unexpected Opcode";
+							}
+							else if(x.contains("f")||x.contains("F")){
+								packetError = "Invalid Filename";
 							}
 							else{
 								sc.reset(); //clear scanner
