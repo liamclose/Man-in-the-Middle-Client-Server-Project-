@@ -77,9 +77,16 @@ public class Message extends Thread{
 							}
 							s.verbose = !s.verbose;
 						}
-						else {
-							sc.reset();
-						}
+						//else {
+						//	sc.reset();
+						//}
+					}
+				}
+				else {
+					synchronized(s) {
+						s.menu();
+						System.out.println("done with the menu " + s.filename + ((Client) s).opcode);
+						s.notify();
 					}
 				}
 			}

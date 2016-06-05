@@ -2,6 +2,7 @@ package tftp;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.Scanner;
 //ack 0 not printed
 public class Server extends Stoppable{
@@ -11,6 +12,7 @@ public class Server extends Stoppable{
 	public static final byte[] dataOne = {0, 3, 0, 1};
 	public static final byte[] ackZero = {0, 4, 0, 0};
 	boolean readTransfer;
+	private static ArrayList<String> filesInProgress;
 
 	public Server() {
 		try {
@@ -21,6 +23,7 @@ public class Server extends Stoppable{
 			System.exit(1);
 		}
 		shutdown = false;
+		filesInProgress = new ArrayList();
 
 	}
 	/*
@@ -113,7 +116,22 @@ public class Server extends Stoppable{
 		}
 	}
 
+	public void menu() {}
 	public void run() {
+		if (filesInProgress.contains(filename)) {
+			try {
+				sendSocket.send(super.createErrorPacket("Concurrent access on: " + filename, 2, receivePacket.getPort()));
+				return;
+			} catch (UnknownHostException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+		filesInProgress.add(filename);
 		if (!readTransfer) {
 			write();
 		}
@@ -121,6 +139,8 @@ public class Server extends Stoppable{
 			read();
 		}
 		sendSocket.close();
+		System.out.println(filesInProgress);
+		filesInProgress.remove(filename);
 	}
 	/*
 	 * waits for a new client connection and creates a new thread to deal with it

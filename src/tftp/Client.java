@@ -15,6 +15,8 @@ public class Client extends Stoppable{
 
 	public static final int READ = 1; 
 	public static final int WRITE = 2;
+	
+	public int opcode = 0;
 
 	// validation client side
 	public Client()
@@ -34,7 +36,7 @@ public class Client extends Stoppable{
 	 * the filename is
 	 * Once it has sent the request it waits for the server to respond.
 	 */
-	public void sendAndReceive(int opcode) {
+	public void sendAndReceive() {
 		System.out.println(filename);
 		timeout = true;
 		String format = "ocTet";
@@ -44,7 +46,10 @@ public class Client extends Stoppable{
 		int timeoutCounter = 0;
 		byte data[] = new byte[516];
 		super.receivePacket = new DatagramPacket(data, data.length);
-		menu = false;
+		synchronized(this) {
+			menu = false;
+			this.notify();
+		}
 		if (!shutdown) {
 			// Process the received datagram.
 			if (opcode==WRITE) {
@@ -118,7 +123,7 @@ public class Client extends Stoppable{
 						}
 					}
 					waiting = false;
-					sendAndReceive(WRITE);
+					sendAndReceive();
 				}
 				catch (IOException e) {
 					e.printStackTrace();
@@ -131,6 +136,8 @@ public class Client extends Stoppable{
 					BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(filename));
 					try {
 						sendReceiveSocket.send(super.sendPacket);
+						Message.printOutgoing(sendPacket, "Client", verbose);
+						first = true;
 					} catch (IOException e1) {
 						e1.printStackTrace();
 						System.exit(1);
@@ -151,7 +158,7 @@ public class Client extends Stoppable{
 							}
 						}
 						waiting = false;
-						sendAndReceive(READ);
+						sendAndReceive();
 					}
 					else {
 						e.printStackTrace();
@@ -172,8 +179,10 @@ public class Client extends Stoppable{
 				}
 			}
 		}
+		if (!shutdown) {
 		System.out.println("(R)ead, (w)rite, toggle (v)erbose, toggle (t)est, or (q)uit?");
 		System.out.println("Default options are verbose mode on, test mode off.");
+		}
 
 	}
 
@@ -184,21 +193,85 @@ public class Client extends Stoppable{
 		boolean error = true;
 		InetAddress ret = null;
 		while (error) {
-			r = s.split("\\.");
-
-			byte[] b = new byte[r.length];
-			for (int i=0;i<r.length;i++) {
-				b[i] = (byte) Integer.parseInt(r[i]);
-			}
 			try {
+				r = s.split("\\.");
+
+				byte[] b = new byte[r.length];
+				for (int i=0;i<r.length;i++) {
+					b[i] = (byte) Integer.parseInt(r[i]);
+				}
+
 				ret = InetAddress.getByAddress(b);
 				error = false;
-			} catch (UnknownHostException e) {
+			} catch (UnknownHostException | NumberFormatException e) {
 				System.out.println("Invalid IP, please check the value: " + s);
 				s = c.sc.next();
 			}
 		}
 		return ret;
+	}
+
+	public void menu() {
+		String x;			
+		sc.reset();
+		System.out.println(y);
+		if(sc.hasNext()) {
+			x = sc.next();
+			System.out.println(x);
+			if (x.contains("R")||x.contains("r")) {
+				opcode = READ;
+				System.out.println("Please enter a filename.");
+				filename = sc.next();
+				sc.reset();
+				System.out.println("Read");
+				menu = false;
+				return;
+			}
+			else if (x.contains("w")||x.contains("W")) {
+				opcode = WRITE;
+				System.out.println("Please enter a filename.");
+				filename = sc.next();
+				sc.reset();
+				menu = false;
+				return;
+			}
+			else if (x.contains("v")||x.contains("V")) {
+				verbose = !verbose;
+				System.out.println("Verbose = " + verbose);
+			}
+			else if (x.contains("t")||x.contains("T")) {
+				if (serverPort==23) {
+					serverPort = 69;
+					ip = serverIP;
+					System.out.println("Test mode off.");
+				}
+				else {
+					serverPort = 23;
+					try {
+						DatagramPacket d = new DatagramPacket(ip.getAddress(),4,InetAddress.getLocalHost(),23);
+						sendReceiveSocket.send(d);
+						ip = InetAddress.getLocalHost();
+					} catch (UnknownHostException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					System.out.println("Test mode on.");
+				}
+			}
+			else if (x.contains("q")||x.contains("Q")) {
+				sendReceiveSocket.close();
+				System.out.println("Closing connection.");
+				sc.close();
+				System.exit(0);
+			}
+			else {
+				sc.reset(); //clear scanner
+			}
+
+		}
+		menu = false;
 	}
 	//client broken for quitting mid transfer
 	public static void main(String args[]) {
@@ -211,8 +284,8 @@ public class Client extends Stoppable{
 				System.out.println("Please enter the server IP address.");
 				x = c.sc.next();
 				c.ip = getIP(c,x);
-					c.serverIP = c.ip;
-				System.out.println(x);
+				c.serverIP = c.ip;
+				System.out.println("ugh");
 			}
 			else {
 				try {
@@ -226,62 +299,20 @@ public class Client extends Stoppable{
 		}
 		System.out.println("(R)ead, (w)rite, toggle (v)erbose, toggle (t)est, or (q)uit?");
 		System.out.println("Default options are verbose mode on, test mode off.");
+		c.menu = true;
 		new Message(c,c.sc).start();
 		while (!c.shutdown) {
-			c.menu = true;
-			while(c.sc.hasNext()) {
-				x = c.sc.next();
-				System.out.println(x);
-				if (x.contains("R")||x.contains("r")) {
-					System.out.println("Please enter a filename.");
-					c.filename = c.sc.next();
-					c.sc.reset();
-
-					c.sc.reset();
-					c.sendAndReceive(READ);
+			synchronized(c) {
+				c.menu = true;
+				try {
+					c.wait();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
-				else if (x.contains("w")||x.contains("W")) {
-					System.out.println("Please enter a filename.");
-					c.filename = c.sc.next();
-					c.sc.reset();
-					c.sc.reset();
-					c.sendAndReceive(WRITE);
-				}
-				else if (x.contains("v")||x.contains("V")) {
-					c.verbose = !c.verbose;
-					System.out.println("Verbose = " + c.verbose);
-				}
-				else if (x.contains("t")||x.contains("T")) {
-					if (c.serverPort==23) {
-						c.serverPort = 69;
-						c.ip = c.serverIP;
-						System.out.println("Test mode off.");
-					}
-					else {
-						c.serverPort = 23;
-						try {
-							DatagramPacket d = new DatagramPacket(c.ip.getAddress(),4,InetAddress.getLocalHost(),23);
-							c.sendReceiveSocket.send(d);
-							c.ip = InetAddress.getLocalHost();
-						} catch (UnknownHostException e) {
-							e.printStackTrace();
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						System.out.println("Test mode on.");
-					}
-				}
-				else if (x.contains("q")||x.contains("Q")) {
-					c.sendReceiveSocket.close();
-					System.out.println("Closing connection.");
-					c.sc.close();
-					System.exit(0);
-				}
-				else {
-					c.sc.reset(); //clear scanner
-				}
+				System.out.println("awoke! ! ! " + c.filename + c.opcode);
+				c.sendAndReceive();
 			}
-		}	
+		}
 	}
 }
