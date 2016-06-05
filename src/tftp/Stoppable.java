@@ -22,8 +22,6 @@ public abstract class Stoppable extends Thread {
 		shutdown = true;
 	} 
 
-	public abstract void menu();
-
 	public DatagramPacket createErrorPacket(String errorMessage,int errorCode,int port) throws UnknownHostException {
 		byte[] errorBytes = new byte[errorMessage.length()+5];
 		System.arraycopy(errorMessage.getBytes(), 0, errorBytes, 4, errorMessage.length());
