@@ -8,9 +8,10 @@ public class Client extends Stoppable{
 
 	DatagramSocket sendReceiveSocket;
 	Scanner sc;
-	
+
 
 	int serverPort = 69;
+	InetAddress serverIP;
 
 	public static final int READ = 1; 
 	public static final int WRITE = 2;
@@ -33,7 +34,6 @@ public class Client extends Stoppable{
 	 * the filename is
 	 * Once it has sent the request it waits for the server to respond.
 	 */
-	//SENDING B4 OPEN
 	public void sendAndReceive(int opcode) {
 		System.out.println(filename);
 		timeout = true;
@@ -177,35 +177,44 @@ public class Client extends Stoppable{
 
 	}
 
-	public static byte[] getIP(String s) {
-		String[] r = s.split("\\.");
-		byte[] b = new byte[r.length];
-		for (int i=0;i<r.length;i++) {
-			b[i] = (byte) Integer.parseInt(r[i]);
+	//invalid ip as an error
+
+	public static InetAddress getIP(Client c, String s) {
+		String[] r;
+		boolean error = true;
+		InetAddress ret = null;
+		while (error) {
+			r = s.split("\\.");
+
+			byte[] b = new byte[r.length];
+			for (int i=0;i<r.length;i++) {
+				b[i] = (byte) Integer.parseInt(r[i]);
+			}
+			try {
+				ret = InetAddress.getByAddress(b);
+				error = false;
+			} catch (UnknownHostException e) {
+				System.out.println("Invalid IP, please check the value: " + s);
+				s = c.sc.next();
+			}
 		}
-		return b;
+		return ret;
 	}
 	//client broken for quitting mid transfer
 	public static void main(String args[]) {
 		Client c = new Client();
 		String x;
-		byte[] address = null;
 		System.out.println("Is the server running on this computer? Y/N");
 		if (c.sc.hasNext()) {
 			x = c.sc.next();
-			if (x.contains("y")||x.contains("Y")) {
+			if (x.contains("N")||x.contains("n")) {
 				System.out.println("Please enter the server IP address.");
 				x = c.sc.next();
-				address = getIP(x);
-				try {
-					c.ip = InetAddress.getByAddress(address);
-				} catch (UnknownHostException e) {
-					e.printStackTrace();
-				}
+				c.ip = getIP(c,x);
+					c.serverIP = c.ip;
 				System.out.println(x);
-				System.out.println(address[0] + "  " +address[1] + "  " +address[2] + "  " +address[3]);
 			}
-				
+
 		}
 		System.out.println("(R)ead, (w)rite, toggle (v)erbose, toggle (t)est, or (q)uit?");
 		System.out.println("Default options are verbose mode on, test mode off.");
@@ -219,7 +228,7 @@ public class Client extends Stoppable{
 					System.out.println("Please enter a filename.");
 					c.filename = c.sc.next();
 					c.sc.reset();
-					
+
 					c.sc.reset();
 					c.sendAndReceive(READ);
 				}
@@ -237,13 +246,13 @@ public class Client extends Stoppable{
 				else if (x.contains("t")||x.contains("T")) {
 					if (c.serverPort==23) {
 						c.serverPort = 69;
-						
+						c.ip = c.serverIP;
 						System.out.println("Test mode off.");
 					}
 					else {
 						c.serverPort = 23;
 						try {
-							DatagramPacket d = new DatagramPacket(address,4,InetAddress.getLocalHost(),23);
+							DatagramPacket d = new DatagramPacket(c.ip.getAddress(),4,InetAddress.getLocalHost(),23);
 							c.sendReceiveSocket.send(d);
 							c.ip = InetAddress.getLocalHost();
 						} catch (UnknownHostException e) {
