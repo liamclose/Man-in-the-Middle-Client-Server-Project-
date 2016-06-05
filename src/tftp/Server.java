@@ -92,10 +92,9 @@ public class Server extends Stoppable{
 	}
 
 	public void write() {
-		filename = "server/".concat(filename);
 		BufferedOutputStream out;
 		try {
-			out = new BufferedOutputStream(new FileOutputStream(filename));
+			out = new BufferedOutputStream(new FileOutputStream("server/".concat(filename)));
 			sendSocket.send(sendPacket);
 			super.write(out, sendSocket);
 		} catch (FileNotFoundException e) {
