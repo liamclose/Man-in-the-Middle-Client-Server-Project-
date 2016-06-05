@@ -394,6 +394,8 @@ public class Intermediate extends Stoppable{
 
 		}
 	}
+	
+	public void menu() {}
 
 	public static void main (String[] args) {
 		Intermediate i = new Intermediate();		
