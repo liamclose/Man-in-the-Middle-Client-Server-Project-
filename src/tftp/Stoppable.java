@@ -62,6 +62,11 @@ public abstract class Stoppable extends Thread {
 			do {
 				receivePacket = new DatagramPacket(data,516);
 				while (timeout) {
+					if (shutdown) {
+						System.out.println("\n\nExiting transfer.");
+						filesInProgress.remove(filename);
+						return;
+					}
 					try {
 						sendReceiveSocket.setSoTimeout(1500);
 						sendReceiveSocket.receive(receivePacket); //receive from other
@@ -222,6 +227,11 @@ public abstract class Stoppable extends Thread {
 				sendPacket = new DatagramPacket(message,n+4,ip,port);
 				Message.printOutgoing(sendPacket, "Read", verbose);
 				while (timeout||wrongPort) {
+					if (shutdown) {
+						System.out.println("\n\nExiting transfer.");
+						filesInProgress.remove(filename);
+						return;
+					}
 					if (!wrongPort) {
 						sendReceiveSocket.send(sendPacket);
 					}

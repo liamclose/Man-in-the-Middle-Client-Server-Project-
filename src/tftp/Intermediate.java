@@ -342,6 +342,16 @@ public class Intermediate extends Stoppable{
 		}
 	}
 
+	public void setServerIP(DatagramPacket p) {
+		try {
+			byte[] address = new byte[4];
+			System.arraycopy(p.getData(), 0, address, 0, 4);
+			serverAddress = InetAddress.getByAddress(address);
+		} catch (UnknownHostException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
 	/*
 	 * forward takes all messages from the client and forwards them on to the server
 	 * it also creates a new intermediate host thread with its own serverside port and 
@@ -356,14 +366,7 @@ public class Intermediate extends Stoppable{
 			e.printStackTrace();
 			System.exit(1);
 		}
-		try {
-			byte[] address = new byte[4];
-			System.arraycopy(receivePacket.getData(), 0, address, 0, 4);
-			serverAddress = InetAddress.getByAddress(address);
-		} catch (UnknownHostException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+		setServerIP(receivePacket);
 		while (!shutdown) { //loop forever-ish
 			data = new byte[516];
 			receivePacket = new DatagramPacket(data, data.length);
@@ -373,9 +376,14 @@ public class Intermediate extends Stoppable{
 				e.printStackTrace();
 				System.exit(1);
 			}
+			if (receivePacket.getData()[1]<0||receivePacket.getData()[1]>5) {
+				setServerIP(receivePacket);
+			}
+			else {
 			Message.printIncoming(receivePacket, "Intermediate Host",verbose);
 			replyPort = receivePacket.getPort();	
 			new Intermediate(receivePacket, verbose, replyPort).start();
+			}
 
 		}
 	}
@@ -459,7 +467,7 @@ public class Intermediate extends Stoppable{
 						}
 						else if(packetType.contains("W")||packetType.contains("w")){
 							packetType = "WRQ";
-							System.out.println("How would you like to Corrupt the WRQ? \n (i)nvalid opcode or (in)valid mode or (n)o null terminator or (u)nexpected opcode or invalid (f)ilename");
+							System.out.println("How would you like to Corrupt the WRQ? \n (i)nvalid opcode or (in)valid mode or\n (n)o null terminator or (u)nexpected opcode or invalid (f)ilename");
 							x = sc.next();
 							if(x.contains("in")||x.contains("IN")||x.contains("In")||x.contains("iN")){
 								packetError = "Invalid Mode";
@@ -483,7 +491,7 @@ public class Intermediate extends Stoppable{
 						}
 						else if(packetType.contains("R")||packetType.contains("r")){
 							packetType = "RRQ";
-							System.out.println("How would you like to Corrupt the RRQ? \n (i)nvalid opcode or (in)valid mode or (n)o null terminator or (u)nexpected opcode or invalid (f)ilename");
+							System.out.println("How would you like to Corrupt the RRQ? \n (i)nvalid opcode or (in)valid mode or\n (n)o null terminator or (u)nexpected opcode or invalid (f)ilename");
 							x = sc.next();
 							if(x.contains("in")||x.contains("IN")||x.contains("In")||x.contains("iN")){
 								packetError = "Invalid Mode";

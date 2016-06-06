@@ -106,7 +106,7 @@ public class Message extends Thread{
 			throw new MalformedPacketException("Invalid opcode.");
 		}
 		if (Pattern.matches("^\0(\001|\002).+\0.+$", data)||Pattern.matches("^\0(\001|\002).+.+\0$", data)) {
-			throw new MalformedPacketException("Missing null terminator.");
+			throw new MalformedPacketException("Malformed packet.");
 		}
 		return false;
 	}

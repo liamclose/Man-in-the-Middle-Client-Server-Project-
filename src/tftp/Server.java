@@ -198,12 +198,6 @@ public class Server extends Stoppable{
 	public static void main( String args[] )
 	{
 		System.out.println("Press q to quit or v to toggle verbose mode.\nVerbose mode is on by default.");
-			try {
-				System.out.println("Server IP address: " + InetAddress.getLocalHost().getHostAddress());
-			} catch (UnknownHostException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
 		Server c = new Server();
 		new Message(c,new Scanner(System.in)).start();
 		c.receiveAndReply();
