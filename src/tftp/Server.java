@@ -59,6 +59,7 @@ public class Server extends Stoppable{
 			in = new BufferedInputStream(new FileInputStream ("server/".concat(filename)));
 			Message.printOutgoing(sendPacket, "Server", verbose);
 			super.read(in, sendSocket, receivePacket.getPort());
+			in.close();
 		} catch (FileNotFoundException e) {
 			
 			filename = "File " + filename + " does not exist.";
@@ -90,6 +91,7 @@ public class Server extends Stoppable{
 			out = new BufferedOutputStream(new FileOutputStream("server/".concat(filename)));
 			sendSocket.send(sendPacket);
 			super.write(out, sendSocket);
+			out.close();
 		} catch (FileNotFoundException e) {
 			try {
 				DatagramPacket errorPacket = super.createErrorPacket("Access denied on: " + filename, 2, receivePacket.getPort());
@@ -99,8 +101,11 @@ public class Server extends Stoppable{
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			} catch (IOException e1) {
+				if (e.getMessage().equals("There is not enough space on the disk")||e.getMessage().equals("Stream Closed")) {}
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				else{
+					e1.printStackTrace();
+				}
 			}
 		}
 		catch (IOException e) {
