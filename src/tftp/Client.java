@@ -11,7 +11,7 @@ public class Client extends Stoppable{
 
 
 	int serverPort = 69;
-	InetAddress serverIP;
+	InetAddress serverIP; 
 
 	public static final int READ = 1; 
 	public static final int WRITE = 2;
@@ -37,7 +37,7 @@ public class Client extends Stoppable{
 	 * the filename is
 	 * Once it has sent the request it waits for the server to respond.
 	 */
-	public void sendAndReceive(boolean top) {
+	public void sendAndReceive() {
 		System.out.println(filename);
 		timeout = true;
 		String format = "ocTet";
@@ -120,12 +120,13 @@ public class Client extends Stoppable{
 						try {
 							wait();
 						} catch (InterruptedException e1) {
-							// TODO Auto-generated catch block
 							e1.printStackTrace();
 						}
 					}
 					waiting = false;
-					sendAndReceive(false);
+					pathway = filename;
+					filename = formatFilename(pathway);
+					sendAndReceive();
 				}
 				catch (IOException e) {
 					e.printStackTrace();
@@ -133,7 +134,6 @@ public class Client extends Stoppable{
 			}
 			else if (opcode==READ) {
 				try {
-					System.out.println("Creating file output.");
 					BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(pathway));
 					try {
 						sendReceiveSocket.send(super.sendPacket);
@@ -145,10 +145,11 @@ public class Client extends Stoppable{
 					}
 					write(out,sendReceiveSocket);
 					out.close();
-				} catch (IOException e) {
+				}
+				catch (IOException e) {
 					if (e.getMessage().equals("There is not enough space on the disk")||e.getMessage().equals("Stream Closed")) {
 					} 
-					else if (e.getMessage().equals(pathway + " (Access is denied)")) {
+					else if (e.getMessage().contains("(Access is denied)")) {
 						System.out.println("Access denied: " + pathway + "\nPlease enter a new file.");
 						waiting = true;
 						synchronized (this) {
@@ -159,7 +160,24 @@ public class Client extends Stoppable{
 							}
 						}
 						waiting = false;
-						sendAndReceive(false);
+						pathway = filename;
+						filename = formatFilename(pathway);
+						sendAndReceive();
+					}
+					else if (e.getMessage().contains("The system cannot find")) {
+						System.out.println("File: " + pathway + " does not exist.\nPlease enter a new file.");
+						waiting = true;
+						synchronized (this) {
+							try {
+								wait();
+							} catch (InterruptedException e1) {
+								e1.printStackTrace();
+							}
+						}
+						waiting = false;
+						pathway = filename;
+						filename = formatFilename(pathway);
+						sendAndReceive();
 					}
 					else {
 						e.printStackTrace();
@@ -179,9 +197,6 @@ public class Client extends Stoppable{
 
 				}
 			}
-		}
-		if (!shutdown&&top) {
-			
 		}
 
 	}
@@ -291,7 +306,7 @@ public class Client extends Stoppable{
 				System.out.println("Please enter the server IP address.");
 				x = c.sc.next();
 				c.ip = getIP(c,x);
-				c.serverIP = c.ip;
+				c.serverIP = c.ip; //save server ip for toggling test mode on/off
 			}
 			else {
 				try {
@@ -317,7 +332,7 @@ public class Client extends Stoppable{
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				c.sendAndReceive(true);
+				c.sendAndReceive();
 				if (!c.shutdown) {
 					System.out.println("(R)ead, (w)rite, toggle (v)erbose, toggle (t)est, or (q)uit?");
 					System.out.println("Current options are verbose mode " + c.verbose + ", test mode " + (c.serverPort==23));

@@ -4,7 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Scanner;
-//ack 0 not printed
+
 public class Server extends Stoppable{
 
 	DatagramSocket sendSocket, receiveSocket;

@@ -299,7 +299,6 @@ public abstract class Stoppable extends Thread {
 					}
 				}
 				timeoutCounter = 0;
-				//look into this...
 				while ((Message.parseBlock(sendPacket.getData())<Message.parseBlock(receivePacket.getData()))||timeout) { 
 					try {
 						sendReceiveSocket.receive(receivePacket);

@@ -23,6 +23,7 @@ public class Message extends Thread{
 		this.s = s;
 	}
 
+	//run is used to take in input from the scanner so the user can interact with the server/client
 	public void run() {
 		if (inter) {
 			try {
@@ -34,8 +35,8 @@ public class Message extends Thread{
 		}
 		else {
 			while (true) {
-					if (sc.hasNext()) {
-						if (!s.menu) {
+				if (sc.hasNext()) {
+					if (!s.menu) {
 						String x = sc.next();
 						if (s.waiting()) {
 							s.filename = x;
@@ -43,9 +44,6 @@ public class Message extends Thread{
 								s.notify();
 							}
 						}
-						//else if (x.equals("r")||x.equals("R")){
-					//		s.menu = true;
-					//	}
 						else if (x.equals("q")||x.equals("Q")){
 							s.setShutdown();
 							return;
@@ -59,18 +57,14 @@ public class Message extends Thread{
 							}
 							s.verbose = !s.verbose;
 						}
-						//else {
-						//	sc.reset();
-						//}
 					}
-				
-				else {
-					synchronized(s) {
-						 ((Client)s).menu(sc.next());
-						s.notify();
+					else {
+						synchronized(s) {
+							((Client)s).menu(sc.next());
+							s.notify();
+						}
 					}
 				}
-					}
 			}
 		}
 	}
@@ -117,6 +111,7 @@ public class Message extends Thread{
 		return false;
 	}
 
+	//gets the block number as an integer from a packet
 	public static int parseBlock(byte[] data) {
 		int x = (int) data[2];
 		int y = (int) data[3];
@@ -128,12 +123,13 @@ public class Message extends Thread{
 		}
 		return 256*x+y;
 	}
-
+	
+	//converts an integer to a byte array of length 2 representing that block number
 	public static byte[] toBlock(int n){
 		byte[] b = {(byte) (n/256), (byte) (n%256)};
 		return b;
 	}
-
+	//parses out the filename from a validly formatted message
 	public static String parseFilename(String data) {
 		return data.split("\0")[1].substring(1);
 	}
@@ -160,10 +156,10 @@ public class Message extends Thread{
 		return result;
 	}
 
-	//prints relevent information about an incoming packet
+	//prints relevant information about an incoming packet
 	public static void printIncoming(DatagramPacket p, String name, boolean verbose) {
-		if (verbose) {
-			int opcode = p.getData()[1];
+		int opcode = p.getData()[1];
+		if (verbose||opcode==5) { //if verbose mode is on, or this is an error packet
 			System.out.println(name + ": packet received.");
 			System.out.println("From host: " + p.getAddress());
 			System.out.println("Host port: " + p.getPort());
@@ -194,8 +190,8 @@ public class Message extends Thread{
 
 	//prints information about an outgoing packet
 	public static void printOutgoing(DatagramPacket p, String name, boolean verbose) {
-		if (verbose) {
-			int opcode = p.getData()[1];
+		int opcode = p.getData()[1];
+		if (verbose||opcode==5) { //if verbose mode is on, or this is an error packet
 			System.out.println(name + ": packet sent.");
 			System.out.println("To host: " + p.getAddress());
 			System.out.println("Host port: " + p.getPort());
