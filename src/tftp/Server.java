@@ -137,7 +137,6 @@ public class Server extends Stoppable{
 		}
 		sendSocket.close();		
 		filesInProgress.remove(filename);
-		System.out.println(filesInProgress);
 	}
 	/*
 	 * waits for a new client connection and creates a new thread to deal with it

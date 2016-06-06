@@ -213,19 +213,16 @@ public class Client extends Stoppable{
 	
 	public static String formatFilename(String s) {
 		String[] r = s.split("\\/");
-		System.out.println(r[r.length-1]);
 		return r[r.length-1];
 	}
 
 	public void menu(String x) {
-		System.out.println(x + menu);
 		while(menu || sc.hasNext()) {
 			if (menu) {
 				menu = false;
 			}
 			else {
 				x = sc.next();
-				System.out.println("nope");
 			}
 			if (x.contains("R")||x.contains("r")) {
 				opcode = READ;
@@ -233,7 +230,6 @@ public class Client extends Stoppable{
 				pathway = sc.next();
 				filename = formatFilename(pathway);
 				sc.reset();
-				System.out.println("Read");
 				menu = false;
 				return;
 			}
@@ -296,7 +292,6 @@ public class Client extends Stoppable{
 				x = c.sc.next();
 				c.ip = getIP(c,x);
 				c.serverIP = c.ip;
-				System.out.println("ugh");
 			}
 			else {
 				try {

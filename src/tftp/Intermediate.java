@@ -27,8 +27,6 @@ public class Intermediate extends Stoppable{
 		this.verbose = verbose;
 		filename = Message.parseFilename(new String(received.getData(),0,received.getLength()));
 		receivePacket = received;
-		System.out.println(received.getData());
-		System.out.println(this + "   123 " + receivePacket.getData());
 		try {
 			serverSideSocket = new DatagramSocket();
 			replySocket = new DatagramSocket();
@@ -40,8 +38,6 @@ public class Intermediate extends Stoppable{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			System.out.println(this + "end of constructor");
-			System.out.println(this + "  " +  receivePacket.getData());
 		} catch (SocketException e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -50,21 +46,15 @@ public class Intermediate extends Stoppable{
 
 	public void run() {		
 		//server side printing on receive
-		System.out.println(this + "run start "  + serverAddress.getHostAddress());
 		try {
-			System.out.println(serverAddress.getHostAddress());
 			byte tempData[] = new byte[516];
-			System.out.println(this + "  " + (receivePacket==null));
 			tempData = receivePacket.getData();	
-			System.out.println(serverAddress.getHostAddress());
 			sendPacket = new DatagramPacket(tempData, receivePacket.getLength(), serverAddress,69);
-			System.out.println("how");
 			readWriteError();
 			int x = 0;			
 			int timeoutCount = 0;
 			timeout = false;
 			while(true) { //loop forever
-				System.out.println("forever loop");
 				if (timeoutCount ==5) {
 					return;
 				}
@@ -163,7 +153,6 @@ public class Intermediate extends Stoppable{
 
 
 	private void readWriteError(){
-		System.out.println("???");
 		boolean specialRequest = false;
 		if(packetType.toUpperCase().equals("RRQ")||packetType.toUpperCase().equals("WRQ"))
 		{				
@@ -186,7 +175,6 @@ public class Intermediate extends Stoppable{
 		}
 
 		if(!errorType.toUpperCase().contains("LOSE")&&!errorType.toUpperCase().contains("DELAY")){
-			System.out.println("didn't lose");
 			try {
 				serverSideSocket.send(sendPacket);
 			} catch (IOException e) {
@@ -371,7 +359,6 @@ public class Intermediate extends Stoppable{
 		try {
 			byte[] address = new byte[4];
 			System.arraycopy(receivePacket.getData(), 0, address, 0, 4);
-			System.out.println(address[0] + "  " +address[1] + "  " +address[2] + "  " +address[3]);
 			serverAddress = InetAddress.getByAddress(address);
 		} catch (UnknownHostException e1) {
 			// TODO Auto-generated catch block
@@ -380,7 +367,6 @@ public class Intermediate extends Stoppable{
 		while (!shutdown) { //loop forever-ish
 			data = new byte[516];
 			receivePacket = new DatagramPacket(data, data.length);
-			System.out.println(this + "main");
 			try {
 				receiveSocket.receive(receivePacket);
 			} catch (IOException e) {
@@ -389,14 +375,11 @@ public class Intermediate extends Stoppable{
 			}
 			Message.printIncoming(receivePacket, "Intermediate Host",verbose);
 			replyPort = receivePacket.getPort();	
-			System.out.println(this + "later in main");
 			new Intermediate(receivePacket, verbose, replyPort).start();
 
 		}
 	}
 	
-	public void menu() {}
-
 	public static void main (String[] args) {
 		Intermediate i = new Intermediate();		
 		String x;	
