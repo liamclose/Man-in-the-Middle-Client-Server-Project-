@@ -2,10 +2,12 @@ package tftp;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 
 public abstract class Stoppable extends Thread {
 	protected boolean shutdown;
 	protected boolean timeout;
+	protected static ArrayList<String> filesInProgress;
 	DatagramPacket sendPacket,receivePacket;
 	int port;
 	String filename;
@@ -66,6 +68,7 @@ public abstract class Stoppable extends Thread {
 							sendReceiveSocket.send(sendPacket);
 							Message.printOutgoing(sendPacket, "Error - invalid", verbose);
 							System.out.println("\n\nExiting transfer.");
+							filesInProgress.remove(filename);
 							return;
 						}
 					} catch (SocketTimeoutException e) {
@@ -73,6 +76,7 @@ public abstract class Stoppable extends Thread {
 						timeoutCounter++;
 						if (shutdown||timeoutCounter==10) {
 							System.out.println("\n\nExiting transfer.");
+							filesInProgress.remove(filename);
 							return;
 						}
 						if (first) {
@@ -88,6 +92,7 @@ public abstract class Stoppable extends Thread {
 							sendReceiveSocket.send(sendPacket);
 							Message.printOutgoing(sendPacket, "Error - caught", verbose);
 							System.out.println("\n\nExiting transfer.");
+							filesInProgress.remove(filename);
 							return;
 						} catch (IOException e1) {
 							// TODO Auto-generated catch block
@@ -106,12 +111,14 @@ public abstract class Stoppable extends Thread {
 					sendPacket = createErrorPacket("Unexpected opcode received.",4,receivePacket.getPort());
 					sendReceiveSocket.send(sendPacket);
 					System.out.println("\n\nExiting transfer.");
+					filesInProgress.remove(filename);
 					return;
 				}
 				else {
 					if (data[1]==5) {
 						Message.printIncoming(receivePacket, "Error4", verbose);
 						System.out.println("\n\nExiting transfer.");
+						filesInProgress.remove(filename);
 						return;
 
 					}
@@ -121,6 +128,7 @@ public abstract class Stoppable extends Thread {
 						sendReceiveSocket.send(sendPacket);
 						Message.printOutgoing(sendPacket, "Error", verbose);
 						System.out.println("\n\nExiting transfer.");
+						filesInProgress.remove(filename);
 						return;
 					}
 					if (expected==actual) {
@@ -131,6 +139,7 @@ public abstract class Stoppable extends Thread {
 							sendReceiveSocket.send(errorPacket);
 							Message.printOutgoing(errorPacket, "ERROR", verbose);
 							System.out.println("\n\nExiting transfer.");
+							filesInProgress.remove(filename);
 							return;
 						}
 						expected++;
@@ -158,6 +167,7 @@ public abstract class Stoppable extends Thread {
 				sendReceiveSocket.send(errorPacket);
 				Message.printOutgoing(errorPacket, "ERROR", verbose);
 				System.out.println("\n\nExiting transfer.");
+				filesInProgress.remove(filename);
 				return;
 				
 			}
@@ -232,11 +242,13 @@ public abstract class Stoppable extends Thread {
 							sendReceiveSocket.send(sendPacket);
 							Message.printOutgoing(sendPacket, "Error", verbose);
 							System.out.println("\n\nExiting transfer.");
+							filesInProgress.remove(filename);
 							return;
 						}
 						else if (receivePacket.getData()[1]==5) {
 							Message.printIncoming(receivePacket,"ERROR",verbose);
 							System.out.println("\n\nExiting transfer.");
+							filesInProgress.remove(filename);
 							return;
 						}
 						else if (receivePacket.getData()[1]!=4) {
@@ -245,6 +257,7 @@ public abstract class Stoppable extends Thread {
 							sendReceiveSocket.send(sendPacket);
 							Message.printOutgoing(sendPacket, "Error", verbose);
 							System.out.println("\n\nExiting transfer.");
+							filesInProgress.remove(filename);
 							return;
 						}
 						else if (Message.parseBlock(receivePacket.getData())>Message.parseBlock(sendPacket.getData())&&!wrapped) {
@@ -253,6 +266,7 @@ public abstract class Stoppable extends Thread {
 							sendReceiveSocket.send(sendPacket);
 							Message.printOutgoing(sendPacket, "Error", verbose);
 							System.out.println("\n\nExiting transfer.");
+							filesInProgress.remove(filename);
 							return;
 						}
 						else {
@@ -274,6 +288,7 @@ public abstract class Stoppable extends Thread {
 						sendReceiveSocket.send(sendPacket);
 						Message.printOutgoing(sendPacket, "Error", verbose);
 						System.out.println("\n\nExiting transfer.");
+						filesInProgress.remove(filename);
 						return;
 					}
 				}
@@ -290,6 +305,7 @@ public abstract class Stoppable extends Thread {
 						timeoutCounter++;
 						if (timeoutCounter==10) {
 							System.out.println("\n\nExiting transfer.");
+							filesInProgress.remove(filename);
 							return;
 						}
 					}
@@ -320,6 +336,7 @@ public abstract class Stoppable extends Thread {
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("\n\nExiting transfer.");
+			filesInProgress.remove(filename);
 			System.exit(1);
 		}
 		System.out.println("Transfer Complete");
