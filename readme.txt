@@ -15,10 +15,10 @@ Steps to run the project:
 2. Open intermediate.java, hit run. Follow Console prompts to simulate errors.
 3. Open Client.java, hit run.
 4. Follow Prompts in console.
-	i.	 If the server is on another computer enter "n" else enter "y"
-			1. If no is selected enter the IP address of the server in the format X.X.X.X where x can be 1-3 digits long ex. 125.733.6.56
-			2. If you do not know the IP address of the server go onto the server computer and Google "get my ip". It will be the first result
-	i.   Choose (t)est to turn on test mode. 
+	i.	 If the server is on another computer enter "n", else enter "y"
+			1. If no is selected enter the IP address of the server in the format X.X.X.X ex. 125.33.6.56
+			2. If you do not know the IP address of the server go onto the server computer and Google "my ip"
+	i.   Choose (t)est to turn on test mode (it is important to do this after the intermediate server has been set up, and it must be done once per error simulated)
 	ii.  Choose (v)erbose mode to turn off verbose mode if you don't want detailed print statements about received and sent data packets.
 	iii. Choose (r)ead or (w)rite.
 5. Enter file name to start transfer.
@@ -37,13 +37,17 @@ TEST INSTRUCTIONS
 Errors simulated can be tested using the intermediate menu.
 See above for instructions on how to test on multiple computers. (Client Menu)
 I/O errors can be simulated using incorrect filenames, changing the permissions on a file, or having the project run on a disk that is partially/completely full.
-The Client saves files in the topmost folder of the project.
-The intermediate must be restarted for every error to be simulated. If not restarted it will only simulate one error.
-
-
+The filename given to the client can be either an exact pathway, a relative pathway, or a simple filename. Only the filename will be sent to the server.
 The server will save the file with the filename provided to the client in the server folder (server/FILENAME).
-Other pathways for both client and server will be handled as part of iteration 5.
+The intermediate must be restarted for every error to be simulated. If not restarted it will only simulate one error and then pass packets through unchanged.
+
+
 To test corrupted error packets use the intermediates menu to choose corrupt/unknown source for an error packet then run with an I/O error.
+
+In this iteration:
+Relative pathways were added.
+The code was reworked to work on multiple machines.
+
 
 New errors added to the intermediate in this iteration was the packet error described below:
 1. corrupted error packet
@@ -69,8 +73,8 @@ As a team we decided:
 	1. To overwrite a file if it already exists for both the client and server. Therefore we do not send error code 6.
 	2. It was useful to leave failed file transfers. We did this for testing purposes (to see in the file what happened ex. empty, half full etc.).
 	3. To have the client and the intermediate run on the same machine whether the server is on the same machine or not.
-	   We did this to be able to have multiple intermediate running (to choose different error situations) and to decrease
-	   the amount of multi-threading.
+	   We did this to be able to have multiple intermediates running (to choose different error situations) and to simplify multithreading in the intermediate.
+	4. To only allow users to access the server folder on the server side
 
 RESPONSIBILITY BREAKDOWN
 

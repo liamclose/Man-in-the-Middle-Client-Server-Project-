@@ -22,7 +22,7 @@ public class Server extends Stoppable{
 			System.exit(1);
 		}
 		shutdown = false;
-		filesInProgress = new ArrayList();
+		filesInProgress = new ArrayList<String>();
 
 	}
 	/*
