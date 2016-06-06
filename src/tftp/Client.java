@@ -17,6 +17,7 @@ public class Client extends Stoppable{
 	public static final int WRITE = 2;
 	
 	public int opcode = 0;
+	public String pathway;
 
 	// validation client side
 	public Client()
@@ -36,7 +37,7 @@ public class Client extends Stoppable{
 	 * the filename is
 	 * Once it has sent the request it waits for the server to respond.
 	 */
-	public void sendAndReceive() {
+	public void sendAndReceive(boolean top) {
 		System.out.println(filename);
 		timeout = true;
 		String format = "ocTet";
@@ -57,7 +58,7 @@ public class Client extends Stoppable{
 				try {
 					byte[] resp = new byte[500];
 					super.receivePacket = new DatagramPacket(resp,500);
-					BufferedInputStream in = new BufferedInputStream(new FileInputStream(filename));
+					BufferedInputStream in = new BufferedInputStream(new FileInputStream(pathway));
 					while (timeout) {
 						try {
 							sendReceiveSocket.send(super.sendPacket);
@@ -79,8 +80,8 @@ public class Client extends Stoppable{
 
 							timeoutCounter++;
 							timeout = true;
-							if (shutdown||timeoutCounter==5) {
-								System.exit(0);
+							if (shutdown||timeoutCounter==10) {
+								return;
 							}
 							System.out.println("Timed out, retransmitting.  ");
 						} catch (MalformedPacketException e) {
@@ -113,7 +114,7 @@ public class Client extends Stoppable{
 					in.close();
 
 				} catch (FileNotFoundException e) {
-					System.out.println("File: " + filename + " does not exist.\nPlease enter a new file.");
+					System.out.println("File: " + pathway + " does not exist.\nPlease enter a new file.");
 					waiting = true;
 					synchronized (this) {
 						try {
@@ -124,17 +125,16 @@ public class Client extends Stoppable{
 						}
 					}
 					waiting = false;
-					sendAndReceive();
+					sendAndReceive(false);
 				}
 				catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
 			else if (opcode==READ) {
-				//resend on read?
 				try {
 					System.out.println("Creating file output.");
-					BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(filename));
+					BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(pathway));
 					try {
 						sendReceiveSocket.send(super.sendPacket);
 						Message.printOutgoing(sendPacket, "Client", verbose);
@@ -148,8 +148,8 @@ public class Client extends Stoppable{
 				} catch (IOException e) {
 					if (e.getMessage().equals("There is not enough space on the disk")||e.getMessage().equals("Stream Closed")) {
 					} 
-					else if (e.getMessage().equals(filename + " (Access is denied)")) {
-						System.out.println("Access denied: " + filename + "\nPlease enter a new file.");
+					else if (e.getMessage().equals(pathway + " (Access is denied)")) {
+						System.out.println("Access denied: " + pathway + "\nPlease enter a new file.");
 						waiting = true;
 						synchronized (this) {
 							try {
@@ -159,7 +159,7 @@ public class Client extends Stoppable{
 							}
 						}
 						waiting = false;
-						sendAndReceive();
+						sendAndReceive(false);
 					}
 					else {
 						e.printStackTrace();
@@ -180,9 +180,8 @@ public class Client extends Stoppable{
 				}
 			}
 		}
-		if (!shutdown) {
-		System.out.println("(R)ead, (w)rite, toggle (v)erbose, toggle (t)est, or (q)uit?");
-		System.out.println("Default options are verbose mode on, test mode off.");
+		if (!shutdown&&top) {
+			
 		}
 
 	}
@@ -211,6 +210,12 @@ public class Client extends Stoppable{
 		}
 		return ret;
 	}
+	
+	public static String formatFilename(String s) {
+		String[] r = s.split("\\/");
+		System.out.println(r[r.length-1]);
+		return r[r.length-1];
+	}
 
 	public void menu(String x) {
 		System.out.println(x + menu);
@@ -225,7 +230,8 @@ public class Client extends Stoppable{
 			if (x.contains("R")||x.contains("r")) {
 				opcode = READ;
 				System.out.println("Please enter a filename.");
-				filename = sc.next();
+				pathway = sc.next();
+				filename = formatFilename(pathway);
 				sc.reset();
 				System.out.println("Read");
 				menu = false;
@@ -234,7 +240,8 @@ public class Client extends Stoppable{
 			else if (x.contains("w")||x.contains("W")) {
 				opcode = WRITE;
 				System.out.println("Please enter a filename.");
-				filename = sc.next();
+				pathway = sc.next();
+				filename = formatFilename(pathway);
 				sc.reset();
 				menu = false;
 				return;
@@ -315,8 +322,11 @@ public class Client extends Stoppable{
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				System.out.println("awoke! ! ! " + c.filename + c.opcode);
-				c.sendAndReceive();
+				c.sendAndReceive(true);
+				if (!c.shutdown) {
+					System.out.println("(R)ead, (w)rite, toggle (v)erbose, toggle (t)est, or (q)uit?");
+					System.out.println("Current options are verbose mode " + c.verbose + ", test mode " + (c.serverPort==23));
+				}
 			}
 		}
 	}

@@ -16,7 +16,6 @@ public class Server extends Stoppable{
 
 	public Server() {
 		try {
-			//make socket to receive requests on port 69
 			receiveSocket = new DatagramSocket(69);
 		} catch (SocketException se) {
 			se.printStackTrace();
@@ -116,7 +115,6 @@ public class Server extends Stoppable{
 		}
 	}
 
-	public void menu() {}
 	public void run() {
 		if (filesInProgress.contains(filename)) {
 			try {

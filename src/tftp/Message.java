@@ -37,8 +37,7 @@ public class Message extends Thread{
 	}
 	
 	public static void main(String[] args) {
-		ArrayList<Object> l = new ArrayList<Object>();
-		l.get(3);
+		System.out.println(new String (formatRequest("","octet",2)));
 	}
 
 	public void run() {
@@ -52,7 +51,6 @@ public class Message extends Thread{
 		}
 		else {
 			while (true) {
-				
 					if (sc.hasNext()) {
 						if (!s.menu) {
 						String x = sc.next();
