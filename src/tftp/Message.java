@@ -35,10 +35,6 @@ public class Message extends Thread{
 		inter = true;
 		this.s = s;
 	}
-	
-	public static void main(String[] args) {
-		System.out.println(new String (formatRequest("","octet",2)));
-	}
 
 	public void run() {
 		if (inter) {
@@ -82,11 +78,8 @@ public class Message extends Thread{
 					}
 				
 				else {
-					System.out.println("???");
 					synchronized(s) {
-						System.out.println("Starting menu");
 						 ((Client)s).menu(sc.next());
-						System.out.println("done with the menu " + s.filename + ((Client) s).opcode);
 						s.notify();
 					}
 				}

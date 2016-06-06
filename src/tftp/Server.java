@@ -69,12 +69,6 @@ public class Server extends Stoppable{
 			errorBytes[3] = 1;
 			System.arraycopy(filename.getBytes(), 0, errorBytes, 4, filename.length());
 			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e2) {
-				// TODO Auto-generated catch block
-				e2.printStackTrace();
-			}
-			try {
 				sendPacket = new DatagramPacket(errorBytes,errorBytes.length,ip,receivePacket.getPort());
 				sendSocket.send(sendPacket);
 				Message.printOutgoing(sendPacket, "Error", verbose);

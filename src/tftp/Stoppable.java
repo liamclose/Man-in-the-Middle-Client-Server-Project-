@@ -20,7 +20,13 @@ public abstract class Stoppable extends Thread {
 
 	public void setShutdown() {
 		shutdown = true;
-	} 
+	}
+	
+	public Stoppable() {
+		if (filesInProgress == null) {
+			filesInProgress = new ArrayList<String>();
+		}
+	}
 
 	public DatagramPacket createErrorPacket(String errorMessage,int errorCode,int port) throws UnknownHostException {
 		byte[] errorBytes = new byte[errorMessage.length()+5];
